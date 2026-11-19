@@ -6,7 +6,10 @@
   "https://www.chollometro.com/ofertas/edredon-nordico-pikolin-de-plumon-de-oca-220-250-cm-por-9999-eur-en-amazon-2079369",
   "https://www.chollometro.com/ofertas/auriculares-beats-flex-gris-humo-por-49-eur-en-amazon-2079370",
   "https://www.chollometro.com/ofertas/taza-gato-de-ceramica-con-tapa-cafe-te-regalos-tazas-azul-desayuno-300ml-2079368",
-  "https://www.chollometro.com/ofertas/ron-flor-de-cana-centenario-12-anos-70-cl-2079366"
+  "https://www.chollometro.com/ofertas/ron-flor-de-cana-centenario-12-anos-70-cl-2079366",
+  "https://www.chollometro.com/ofertas/asus-v16-v3607vh-tk214-ordenador-portatil-gaming-de-16-wuxga-144hz-intel-core-7-240h-16gb-ram-512gb-ssd-nvidia-rtx-5050-8gb-sin-so-2079691",
+  "https://www.chollometro.com/ofertas/ps5-horizon-zero-dawn-remastered-2079690",
+  "https://www.chollometro.com/ofertas/flipper-zero-accesorios-oficiales-rebajados-2079688"
  ],
  "pending": {
   "3": {
@@ -38,6 +41,24 @@
    "title": "Ron Flor de Caña Centenario 12 Años 70 cl",
    "category": "Supermercado y alimentación",
    "price": "19,94€"
+  },
+  "9": {
+   "title": "ASUS V16 V3607VH-TK214 - Ordenador Portátil Gaming de 16\" WUXGA 144Hz (Intel Core 7 240H, 16GB RAM, 512GB SSD, NVIDIA RTX 5050 8GB, Sin S.O)",
+   "category": "Coches y motos",
+   "price": "806,66€",
+   "image": "https://static.chollometro.com/threads/raw/jgq1B/2079691_1/re/150x150/qt/55/2079691_1.jpg"
+  },
+  "10": {
+   "title": "PS5 Horizon Zero Dawn Remastered",
+   "category": "Gaming",
+   "price": "19,95€",
+   "image": "https://static.chollometro.com/threads/raw/X2hbc/2079690_1/re/150x150/qt/55/2079690_1.jpg"
+  },
+  "11": {
+   "title": "Flipper Zero + Accesorios Oficiales Rebajados",
+   "category": "Electrónica",
+   "price": "170,05€",
+   "image": "https://static.chollometro.com/threads/raw/YjcRy/2079688_1/re/150x150/qt/55/2079688_1.jpg"
   }
  },
  "published": []
