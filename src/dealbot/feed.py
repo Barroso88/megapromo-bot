@@ -23,6 +23,21 @@ def fetch_feed(url: str = FEED_URL) -> str:
         return resp.read().decode("utf-8")
 
 
+def large_image_url(url: str) -> str:
+    return url.replace("/150x150/", "/768x768/")
+
+
+def fetch_image(url: str, opener=urllib.request.urlopen) -> bytes | None:
+    if not url:
+        return None
+    req = urllib.request.Request(large_image_url(url), headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with opener(req, timeout=15) as resp:
+            return resp.read()
+    except Exception:
+        return None
+
+
 def parse_feed(xml_text: str) -> list[Deal]:
     try:
         root = ET.fromstring(xml_text)

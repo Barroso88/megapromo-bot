@@ -78,3 +78,22 @@ def test_http_error_reports_status_and_description_without_token():
     with pytest.raises(TelegramError) as e:
         tg.get_updates(0)
     assert "401" in str(e.value) and "Unauthorized" in str(e.value) and TOKEN not in str(e.value)
+
+
+def test_send_photo_bytes_posts_multipart_and_returns_id():
+    import json as _json
+    from dealbot.telegram import Telegram
+    seen = {}
+
+    class R:
+        def __enter__(s): return s
+        def __exit__(s, *a): return False
+        def read(s): return _json.dumps({"ok": True, "result": {"message_id": 7}}).encode()
+
+    def op(req, timeout=0):
+        seen["ct"], seen["body"], seen["url"] = req.headers["Content-type"], req.data, req.full_url
+        return R()
+
+    assert Telegram("TOK", opener=op).send_photo_bytes("@c", b"JPEGDATA", "<b>x</b>") == 7
+    assert seen["ct"].startswith("multipart/form-data; boundary=") and seen["url"].endswith("/sendPhoto")
+    assert b"JPEGDATA" in seen["body"] and b'name="caption"' in seen["body"] and b"@c" in seen["body"]

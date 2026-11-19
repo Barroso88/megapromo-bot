@@ -4,12 +4,14 @@ from datetime import datetime
 from html import escape
 from zoneinfo import ZoneInfo
 
-from .compose import channel_post, proposal_text
+from .card import make_card as default_make_card
+from .compose import channel_caption, channel_post, proposal_text, short_title
 from .config import Config
-from .feed import fetch_feed, parse_feed
+from .feed import Deal, fetch_feed, fetch_image as default_fetch_image, parse_feed
 from .links import LinkError, build_affiliate_link, extract_asin, find_url
 from .state import State
 from .telegram import TelegramError
+from .translate import to_pt
 
 LISBON = ZoneInfo("Europe/Lisbon")
 MAX_PROPOSALS = 3
@@ -24,7 +26,22 @@ def _reply(tg, chat, text, reply_to=None) -> bool:
         return False
 
 
-def _handle_message(cfg: Config, tg, state: State, msg: dict, resolve) -> bool:
+def _publish(cfg: Config, tg, title: str, category: str, link: str, image: str,
+             fetch_image, make_card) -> None:
+    """Cartão com foto se possível; senão (ou se a foto falhar) publicação só de texto."""
+    photo = fetch_image(image) if image else None
+    if photo:
+        try:
+            card = make_card(photo, short_title(title, 110), category, cfg.channel_id)
+            tg.send_photo_bytes(cfg.channel_id, card, channel_caption(title, link))
+            return
+        except (ValueError, TelegramError, OSError):
+            pass
+    tg.send_message(cfg.channel_id, channel_post(title, category, link))
+
+
+def _handle_message(cfg: Config, tg, state: State, msg: dict, resolve,
+                    fetch_image, make_card) -> bool:
     """True se a mensagem ficou tratada (offset pode avançar); False para repetir."""
     if str(msg.get("chat", {}).get("id")) != str(cfg.owner_chat_id):
         return True
@@ -47,17 +64,18 @@ def _handle_message(cfg: Config, tg, state: State, msg: dict, resolve) -> bool:
 
     reply_id = str(msg.get("reply_to_message", {}).get("message_id", ""))
     pending = state.pending.get(reply_id)
+    image = ""
     if pending:
-        title, category = pending["title"], pending.get("category", "")
+        title, category, image = pending["title"], pending.get("category", ""), pending.get("image", "")
     else:
         title, category = re.sub(r"\s+", " ", text.replace(url, " ")).strip(), ""
     if not title:
         _reply(tg, chat, "❌ Responde à mensagem da oferta ou escreve o título a seguir ao link.", mid)
         return True
 
-    post = channel_post(title, category, build_affiliate_link(asin, cfg.amazon_tag))
     try:
-        tg.send_message(cfg.channel_id, post)
+        _publish(cfg, tg, title, category, build_affiliate_link(asin, cfg.amazon_tag), image,
+                 fetch_image, make_card)
     except TelegramError as e:
         # Avisa o dono; só repete se nem o aviso chegar. Evita bloquear a fila por um erro permanente.
         return _reply(
@@ -72,15 +90,16 @@ def _handle_message(cfg: Config, tg, state: State, msg: dict, resolve) -> bool:
     return True
 
 
-def handle_updates(cfg: Config, tg, state: State, resolve=None) -> None:
+def handle_updates(cfg: Config, tg, state: State, resolve=None, fetch_image=default_fetch_image,
+                   make_card=default_make_card) -> None:
     for update in tg.get_updates(state.offset):
         msg = update.get("message")
-        if msg is not None and not _handle_message(cfg, tg, state, msg, resolve):
+        if msg is not None and not _handle_message(cfg, tg, state, msg, resolve, fetch_image, make_card):
             return
         state.offset = update["update_id"] + 1
 
 
-def propose_deals(cfg: Config, tg, state: State, fetch, parse, now: datetime) -> None:
+def propose_deals(cfg: Config, tg, state: State, fetch, parse, now: datetime, translate=to_pt) -> None:
     hour = (now.astimezone(LISBON) if now.tzinfo else now).hour
     if hour >= QUIET_FROM or hour < QUIET_UNTIL:
         return
@@ -94,6 +113,8 @@ def propose_deals(cfg: Config, tg, state: State, fetch, parse, now: datetime) ->
             break
         if deal.guid in state.seen:
             continue
+        deal = Deal(deal.guid, translate(deal.title), translate(deal.category), deal.price,
+                    deal.image, deal.thread_url)
         try:
             message_id = tg.send_message(cfg.owner_chat_id, proposal_text(deal))
         except TelegramError:
@@ -104,8 +125,9 @@ def propose_deals(cfg: Config, tg, state: State, fetch, parse, now: datetime) ->
 
 
 def run_once(cfg: Config, tg, state: State, fetch=fetch_feed, now: datetime | None = None,
-             resolve=None, parse=parse_feed) -> None:
+             resolve=None, parse=parse_feed, translate=to_pt, fetch_image=default_fetch_image,
+             make_card=default_make_card) -> None:
     now = now or datetime.now(LISBON)
-    handle_updates(cfg, tg, state, resolve)
-    propose_deals(cfg, tg, state, fetch, parse, now)
+    handle_updates(cfg, tg, state, resolve, fetch_image, make_card)
+    propose_deals(cfg, tg, state, fetch, parse, now, translate)
     state.trim()

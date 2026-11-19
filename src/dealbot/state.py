@@ -41,6 +41,7 @@ class State:
             "title": deal.title,
             "category": deal.category,
             "price": deal.price,
+            "image": deal.image,
         }
 
     def mark_published(self, asin: str) -> None:

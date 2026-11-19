@@ -173,3 +173,45 @@ def test_config_strips_whitespace_and_newlines(monkeypatch):
         monkeypatch.setenv(k, v)
     cfg = Config.from_env()
     assert cfg == Config("123:abc", "1", "@c", "x-21")
+
+
+class PhotoTG(FakeTG):
+    def __init__(self, *a, fail_photo=False, **k):
+        super().__init__(*a, **k)
+        self.photos, self.fail_photo = [], fail_photo
+
+    def send_photo_bytes(self, chat_id, data, caption):
+        if self.fail_photo:
+            raise TelegramError("foto")
+        self.photos.append((str(chat_id), data, caption))
+        return 1
+
+
+def test_pending_with_image_publishes_card_photo():
+    st = State()
+    st.pending["500"] = {"title": "Bola", "category": "Desporto", "price": "", "image": "https://i/x.jpg"}
+    tg = PhotoTG([upd(1, f"https://www.amazon.es/dp/{ASIN}", reply_to=500)])
+    run_once(CFG, tg, st, fetch=lambda: "", now=DAY, parse=lambda _x: [],
+             fetch_image=lambda u: b"IMG", make_card=lambda *a: b"CARD")
+    assert tg.photos == [(CHANNEL, b"CARD", tg.photos[0][2])]
+    assert f"/dp/{ASIN}?tag=meu-21" in tg.photos[0][2] and tg.to(CHANNEL) == []
+    assert ASIN in st.published
+
+
+def test_card_failures_fall_back_to_text_post():
+    for fi, tg in ((lambda u: None, PhotoTG()), (lambda u: b"IMG", PhotoTG(fail_photo=True))):
+        st = State()
+        st.pending["500"] = {"title": "Bola", "category": "", "price": "", "image": "https://i/x.jpg"}
+        tg.updates = [upd(1, f"https://www.amazon.es/dp/{ASIN}", reply_to=500)]
+        run_once(CFG, tg, st, fetch=lambda: "", now=DAY, parse=lambda _x: [],
+                 fetch_image=fi, make_card=lambda *a: b"CARD")
+        assert f"/dp/{ASIN}?tag=meu-21" in tg.to(CHANNEL)[0] and ASIN in st.published
+
+
+def test_proposals_are_translated_and_keep_image():
+    tg, st = FakeTG(), State()
+    run_once(CFG, tg, st, fetch=lambda: "", now=DAY, translate=lambda t: f"PT:{t}",
+             parse=lambda _x: [Deal("g", "Hola", "Deportes", "1€", "https://i/150x150/a.jpg", "https://c/1")])
+    assert "PT:Hola" in tg.to(OWNER)[0] and "PT:Deportes" in tg.to(OWNER)[0]
+    (p,) = st.pending.values()
+    assert p["title"] == "PT:Hola" and p["category"] == "PT:Deportes" and p["image"] == "https://i/150x150/a.jpg"

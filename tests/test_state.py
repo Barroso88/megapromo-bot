@@ -9,7 +9,7 @@ def test_roundtrip(tmp_path):
     s.save(p)
     s2 = State.load(p)
     assert s2.offset == 7 and s2.seen == ["a"] and s2.published == ["B0DWDH32M8"]
-    assert s2.pending["42"] == {"title": "T", "category": "C", "price": "1€"}
+    assert s2.pending["42"] == {"title": "T", "category": "C", "price": "1€", "image": "i"}
 
 
 def test_missing_and_corrupt_give_empty(tmp_path):

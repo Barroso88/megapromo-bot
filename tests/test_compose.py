@@ -23,3 +23,17 @@ def test_proposal_text():
     assert "13,41€" in t and "Deportes" in t
     assert "https://www.chollometro.com/ofertas/x-1" in t
     assert "Responde a esta mensagem com o link da Amazon" in t
+
+
+def test_short_title_cuts_on_separator_and_limit():
+    from dealbot.compose import short_title
+    assert short_title("Televisor TCL 55 polegadas | Alexa, Dolby Atmos e muito mais", 40) == "Televisor TCL 55 polegadas"
+    assert len(short_title("a" * 300, 50)) <= 50 and short_title("a" * 300, 50).endswith("…")
+    assert short_title("Curto", 50) == "Curto"
+
+
+def test_channel_caption_has_title_link_disclosure_and_fits_telegram():
+    from dealbot.compose import DISCLOSURE, channel_caption
+    c = channel_caption("Bola & Co", "https://www.amazon.es/dp/X?tag=a-21")
+    assert "Bola &amp; Co" in c and 'href="https://www.amazon.es/dp/X?tag=a-21"' in c and DISCLOSURE in c
+    assert len(channel_caption("t" * 2000, "https://x")) <= 1024
