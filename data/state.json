@@ -3,7 +3,10 @@
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
-  "https://www.chollometro.com/ofertas/edredon-nordico-pikolin-de-plumon-de-oca-220-250-cm-por-9999-eur-en-amazon-2079369"
+  "https://www.chollometro.com/ofertas/edredon-nordico-pikolin-de-plumon-de-oca-220-250-cm-por-9999-eur-en-amazon-2079369",
+  "https://www.chollometro.com/ofertas/auriculares-beats-flex-gris-humo-por-49-eur-en-amazon-2079370",
+  "https://www.chollometro.com/ofertas/taza-gato-de-ceramica-con-tapa-cafe-te-regalos-tazas-azul-desayuno-300ml-2079368",
+  "https://www.chollometro.com/ofertas/ron-flor-de-cana-centenario-12-anos-70-cl-2079366"
  ],
  "pending": {
   "3": {
@@ -20,6 +23,21 @@
    "title": "Edredón nórdico Pikolin de plumón de oca, 220 × 250 cm, por 99,99 € en Amazon",
    "category": "Hogar, vivienda y oficina",
    "price": "99,99€"
+  },
+  "6": {
+   "title": "Auriculares Beats Flex gris humo por 49 € en Amazon",
+   "category": "Electrónica",
+   "price": "49€"
+  },
+  "7": {
+   "title": "Taza Gato de Cerámica con Tapa Café Té Regalos Tazas-Azul. desayuno, 300ml.",
+   "category": "Hogar, vivienda y oficina",
+   "price": "11,99€"
+  },
+  "8": {
+   "title": "Ron Flor de Caña Centenario 12 Años 70 cl",
+   "category": "Supermercado y alimentación",
+   "price": "19,94€"
   }
  },
  "published": []
