@@ -5,7 +5,7 @@ from html import escape
 from zoneinfo import ZoneInfo
 
 from .card import make_card as default_make_card
-from .compose import channel_caption, channel_post, proposal_text, short_title
+from .compose import channel_caption, channel_post, parse_prices, proposal_text, short_title
 from .config import Config
 from .feed import Deal, fetch_feed, fetch_image as default_fetch_image, parse_feed
 from .links import LinkError, build_affiliate_link, extract_asin, find_url
@@ -27,12 +27,13 @@ def _reply(tg, chat, text, reply_to=None) -> bool:
 
 
 def _publish(cfg: Config, tg, title: str, category: str, link: str, image: str,
-             fetch_image, make_card) -> None:
+             fetch_image, make_card, price=None, old_price=None) -> None:
     """Cartão com foto se possível; senão (ou se a foto falhar) publicação só de texto."""
     photo = fetch_image(image) if image else None
     if photo:
         try:
-            card = make_card(photo, short_title(title, 110), category, cfg.channel_id)
+            card = make_card(photo, short_title(title, 110), category, cfg.channel_id,
+                             price=price, old_price=old_price)
             tg.send_photo_bytes(cfg.channel_id, card, channel_caption(title, link))
             return
         except (ValueError, TelegramError, OSError):
@@ -62,20 +63,21 @@ def _handle_message(cfg: Config, tg, state: State, msg: dict, resolve,
         _reply(tg, chat, "ℹ️ Esse produto já foi publicado.", mid)
         return True
 
+    price, old_price, rest = parse_prices(text.replace(url, " "))
     reply_id = str(msg.get("reply_to_message", {}).get("message_id", ""))
     pending = state.pending.get(reply_id)
     image = ""
     if pending:
         title, category, image = pending["title"], pending.get("category", ""), pending.get("image", "")
     else:
-        title, category = re.sub(r"\s+", " ", text.replace(url, " ")).strip(), ""
+        title, category = rest, ""
     if not title:
         _reply(tg, chat, "❌ Responde à mensagem da oferta ou escreve o título a seguir ao link.", mid)
         return True
 
     try:
         _publish(cfg, tg, title, category, build_affiliate_link(asin, cfg.amazon_tag), image,
-                 fetch_image, make_card)
+                 fetch_image, make_card, price, old_price)
     except TelegramError as e:
         # Avisa o dono; só repete se nem o aviso chegar. Evita bloquear a fila por um erro permanente.
         return _reply(

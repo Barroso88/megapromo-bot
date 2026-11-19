@@ -100,3 +100,6 @@ Para correr a suite de testes automatizados:
 ```bash
 .venv/bin/pytest
 ```
+
+## Preço no cartão (opcional)
+Ao responder com o link, podes juntar os preços que vês na Amazon, por exemplo `507,25 284,80` (antigo e atual, em qualquer ordem). O cartão mostra preço riscado, desconto e preço atual. Sem preços, o cartão fica só com título. A exatidão do preço é responsabilidade tua (regras do programa de Associados).

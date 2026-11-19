@@ -1,4 +1,5 @@
 """Textos do canal e das propostas (Telegram HTML)."""
+import re
 from html import escape
 
 from .feed import Deal
@@ -13,6 +14,20 @@ def channel_post(title: str, category: str, link: str) -> str:
     parts.append(f'👉 <a href="{escape(link, quote=True)}">Ver oferta</a>')
     parts.append(f"<i>{DISCLOSURE}</i>")
     return "\n\n".join(parts)
+
+
+PRICE_RE = re.compile(r"(\d{1,3}(?:\.\d{3})+|\d+)[,.](\d{2})\s*€?")
+
+
+def parse_prices(text: str) -> tuple[str | None, str | None, str]:
+    """Preços escritos pelo dono (até 2): devolve (atual, antigo, texto restante)."""
+    found = [m.group(0).replace("€", "").strip() for m in PRICE_RE.finditer(text)][:2]
+    rest = re.sub(r"\s+", " ", PRICE_RE.sub(" ", text)).strip()
+    if not found:
+        return None, None, rest
+    def val(p): return float(p.replace(".", "").replace(",", "."))
+    found.sort(key=val)
+    return found[0], (found[1] if len(found) > 1 else None), rest
 
 
 def short_title(title: str, limit: int = 90) -> str:

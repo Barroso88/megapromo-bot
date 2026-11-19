@@ -37,3 +37,11 @@ def test_channel_caption_has_title_link_disclosure_and_fits_telegram():
     c = channel_caption("Bola & Co", "https://www.amazon.es/dp/X?tag=a-21")
     assert "Bola &amp; Co" in c and 'href="https://www.amazon.es/dp/X?tag=a-21"' in c and DISCLOSURE in c
     assert len(channel_caption("t" * 2000, "https://x")) <= 1024
+
+
+def test_parse_prices_extracts_up_to_two_and_returns_rest():
+    from dealbot.compose import parse_prices
+    assert parse_prices(" 507,25 284,80€ ") == ("284,80", "507,25", "")
+    assert parse_prices("Bola adidas 13,41") == ("13,41", None, "Bola adidas")
+    assert parse_prices("de 1.499,00 por 1.299,00 TV Samsung") == ("1.299,00", "1.499,00", "de por TV Samsung")
+    assert parse_prices("Bola 5") == (None, None, "Bola 5")
