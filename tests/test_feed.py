@@ -1,0 +1,29 @@
+from pathlib import Path
+
+from dealbot.feed import Deal, parse_feed
+
+XML = (Path(__file__).parent / "fixtures" / "feed.xml").read_text(encoding="utf8")
+
+
+def test_only_amazon_items():
+    deals = parse_feed(XML)
+    assert len(deals) == 2
+    assert all(isinstance(d, Deal) for d in deals)
+
+
+def test_first_deal_fields():
+    d = parse_feed(XML)[0]
+    assert d.price.endswith("€") and d.price[0].isdigit()
+    assert d.category
+    assert d.thread_url.startswith("https://www.chollometro.com/ofertas/")
+    assert d.image.startswith("https://")
+    assert d.guid and d.title
+
+
+def test_missing_price_is_empty_string():
+    assert parse_feed(XML)[1].price == ""
+
+
+def test_invalid_xml_returns_empty():
+    assert parse_feed("<rss><nope") == []
+    assert parse_feed("") == []

@@ -1,0 +1,39 @@
+name: dealbot
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dealbot
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}  # ponta do ramo, não o commit de quando o job foi agendado
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Executar bot
+        env:
+          PYTHONPATH: src
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OWNER_CHAT_ID: ${{ secrets.OWNER_CHAT_ID }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          AMAZON_TAG: ${{ secrets.AMAZON_TAG }}
+        run: python -m dealbot
+      - name: Guardar estado
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state.json
+          git diff --cached --quiet || (git commit -m "chore: estado do bot" && git pull --rebase -X theirs -q && git push)
