@@ -8,6 +8,7 @@ from telethon import TelegramClient, events
 
 from .card import make_card
 from .cleaner import clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message
+from .price_extractor import extract_prices_from_text
 from .compose import short_title
 from .config import ListenerConfig
 from .links import LinkError, build_affiliate_link, extract_asin
@@ -90,6 +91,9 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
         target_handle=cfg.target_channel,
     )
 
+    # Extrai preços antes e depois do texto da mensagem original
+    price_before, price_after = extract_prices_from_text(raw_text)
+
     # Processamento visual: tentar obter a foto e criar o cartão do canal
     card_bytes = None
     if message.photo:
@@ -98,9 +102,9 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
             if photo_data:
                 card_bytes = make_card(
                     photo=photo_data,
-                    title=short_title(title, 110),
-                    category="",
-                    handle=cfg.target_channel,
+                    price_before=price_before,
+                    price_after=price_after,
+                    channel_name="MegaPromo",
                 )
                 logger.info("🎨 Cartão visual com branding gerado com sucesso!")
         except Exception as e:
