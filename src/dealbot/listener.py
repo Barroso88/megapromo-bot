@@ -25,13 +25,25 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
 
     raw_text = (message.text or "") or (getattr(message, "message", "") or "")
     
+    # Obtém o nome/título do canal de origem para o log
+    source_display = "Canal Desconhecido"
+    try:
+        chat = await message.get_chat()
+        username = getattr(chat, "username", None)
+        title_chat = getattr(chat, "title", None)
+        source_display = f"@{username}" if username else (title_chat or "Canal")
+    except Exception:
+        pass
+
     # Procura um link da Amazon válido
     detected_asin = None
+    original_url = None
     for url in urls:
         try:
             asin = extract_asin(url)
             if asin:
                 detected_asin = asin
+                original_url = url
                 break
         except (LinkError, Exception) as e:
             logger.debug("Falha ao analisar url %s: %s", url, e)
@@ -43,6 +55,18 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
     # Deduplicação: se já publicámos este produto, ignora
     if detected_asin in state.published:
         logger.info("ℹ️ Produto %s já foi publicado anteriormente. Ignorando.", detected_asin)
+        if cfg.audit_chat:
+            try:
+                audit_dup = (
+                    f"ℹ️ <b>[MEGAPROMO - JÁ PUBLICADO]</b>\n\n"
+                    f"📢 <b>Origem:</b> {source_display}\n"
+                    f"📦 <b>ASIN:</b> <code>{detected_asin}</code>\n"
+                    f"🔗 <a href=\"{original_url}\">Link Original</a>\n"
+                    f"<i>Descartado para evitar produtos repetidos no teu canal.</i>"
+                )
+                await client.send_message(cfg.audit_chat, audit_dup, parse_mode="html", link_preview=False)
+            except Exception:
+                pass
         return
 
     logger.info("🎯 Nova promoção detetada! ASIN: %s", detected_asin)
@@ -95,6 +119,28 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
             await client.send_message(cfg.target_channel, caption, parse_mode="html", link_preview=True)
 
         logger.info("✅ Publicado com sucesso no canal %s!", cfg.target_channel)
+
+        # Envia relatório visual de auditoria para o teu chat privado ou grupo de controlo
+        if cfg.audit_chat:
+            try:
+                audit_report = (
+                    f"🎯 <b>[MEGAPROMO - NOVA PUBLICAÇÃO]</b>\n\n"
+                    f"📢 <b>Origem:</b> {source_display}\n"
+                    f"📦 <b>ASIN:</b> <code>{detected_asin}</code>\n"
+                    f"🔗 <b>Original:</b> <a href=\"{original_url}\">Ver link original</a>\n"
+                    f"🚀 <b>Teu Link:</b> <a href=\"{affiliate_link}\">Ver com tua tag</a>\n"
+                    f"✅ <b>Publicado em:</b> {cfg.target_channel}"
+                )
+                if card_bytes:
+                    audit_file = io.BytesIO(card_bytes)
+                    audit_file.name = "audit.jpg"
+                    await client.send_file(cfg.audit_chat, audit_file, caption=audit_report, parse_mode="html")
+                elif message.photo or message.media:
+                    await client.send_file(cfg.audit_chat, message.media, caption=audit_report, parse_mode="html")
+                else:
+                    await client.send_message(cfg.audit_chat, audit_report, parse_mode="html", link_preview=True)
+            except Exception as e:
+                logger.warning("Não foi possível enviar relatório de auditoria para %s: %s", cfg.audit_chat, e)
 
         # Regista e persiste o estado
         state.mark_published(detected_asin)

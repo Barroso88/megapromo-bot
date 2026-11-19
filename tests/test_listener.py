@@ -19,6 +19,7 @@ def test_process_incoming_message_ignores_duplicate(tmp_path):
             source_channels=["@canal_fonte"],
             target_channel="@meucanal",
             session_path=str(tmp_path / "session"),
+            audit_chat="",
         )
 
         state = State(published=["B0DWDH32M8"])
@@ -55,6 +56,7 @@ def test_process_incoming_message_publishes_new_deal(tmp_path):
             source_channels=["@canal_fonte"],
             target_channel="@meucanal",
             session_path=str(tmp_path / "session"),
+            audit_chat="",
         )
 
         state = State(published=[])

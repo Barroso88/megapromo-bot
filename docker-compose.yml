@@ -11,4 +11,5 @@ services:
       - AMAZON_TAG=megapromopt-21
       - SOURCE_CHANNELS=@descontosAinanas,@bibliamtengarsada,@cupoesestafixe,@cupoes
       - TARGET_CHANNEL=@megapromo_pt
+      - AUDIT_CHAT=me
       - TELEGRAM_SESSION_PATH=/app/data/dealbot.session
