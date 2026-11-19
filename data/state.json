@@ -1,5 +1,5 @@
 {
- "offset": 249577593,
+ "offset": 249577594,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -9,7 +9,10 @@
   "https://www.chollometro.com/ofertas/ron-flor-de-cana-centenario-12-anos-70-cl-2079366",
   "https://www.chollometro.com/ofertas/asus-v16-v3607vh-tk214-ordenador-portatil-gaming-de-16-wuxga-144hz-intel-core-7-240h-16gb-ram-512gb-ssd-nvidia-rtx-5050-8gb-sin-so-2079691",
   "https://www.chollometro.com/ofertas/ps5-horizon-zero-dawn-remastered-2079690",
-  "https://www.chollometro.com/ofertas/flipper-zero-accesorios-oficiales-rebajados-2079688"
+  "https://www.chollometro.com/ofertas/flipper-zero-accesorios-oficiales-rebajados-2079688",
+  "https://www.chollometro.com/ofertas/dyson-v8-cyclone-aspiradora-sin-cable-cepillo-motorbar-150-aw-2079696",
+  "https://www.chollometro.com/ofertas/bowers-wilkins-px8-auriculares-inalambricos-con-cancelacion-de-ruido-bluetooth-50-carga-rapida-2079694",
+  "https://www.chollometro.com/ofertas/colgate-triple-accion-pasta-de-dientes-6x75ml-proteccion-anticaries-dientes-blancos-y-aliento-fresco-2079693"
  ],
  "pending": {
   "3": {
@@ -59,6 +62,24 @@
    "category": "Electrónica",
    "price": "170,05€",
    "image": "https://static.chollometro.com/threads/raw/YjcRy/2079688_1/re/150x150/qt/55/2079688_1.jpg"
+  },
+  "14": {
+   "title": "Dyson V8 Cyclone Aspiradora sin Cable, Cepillo Motorbar, 150 AW.",
+   "category": "Hogar, vivienda y oficina",
+   "price": "249€",
+   "image": "https://static.chollometro.com/threads/raw/qgGdT/2079696_1/re/150x150/qt/55/2079696_1.jpg"
+  },
+  "15": {
+   "title": "Bowers & Wilkins Px8 Auriculares inalámbricos con cancelación de Ruido, Bluetooth 5.0, Carga rápida",
+   "category": "Electrónica",
+   "price": "267,77€",
+   "image": "https://static.chollometro.com/threads/raw/ydNdL/2079694_1/re/150x150/qt/55/2079694_1.jpg"
+  },
+  "16": {
+   "title": "Colgate Triple Acción Pasta de Dientes 6x75ml Protección Anticaries, Dientes Blancos y Aliento Fresco.",
+   "category": "Salud y belleza",
+   "price": "7,13€",
+   "image": "https://static.chollometro.com/threads/raw/sgyAS/2079693_1/re/150x150/qt/55/2079693_1.jpg"
   }
  },
  "published": []
