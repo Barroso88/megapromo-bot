@@ -114,14 +114,28 @@ async def start_listener(cfg: ListenerConfig):
 
     client = TelegramClient(str(session_path), cfg.api_id, cfg.api_hash)
     await client.start()
-    logger.info("🚀 Telethon ligado com sucesso! A monitorizar os canais: %s", cfg.source_channels)
+    logger.info("🚀 Telethon ligado com sucesso! A validar canais configurados...")
 
-    @client.on(events.NewMessage(chats=cfg.source_channels))
-    async def handler(event):
+    valid_chats = []
+    for ch in cfg.source_channels:
         try:
-            await process_incoming_message(client, event.message, cfg, state, state_file)
+            entity = await client.get_entity(ch)
+            valid_chats.append(entity)
+            logger.info("✅ Canal ativo e monitorizado: %s (%s)", ch, getattr(entity, "title", ch))
         except Exception as e:
-            logger.error("Erro inesperado no handler de mensagens: %s", e)
+            logger.warning("⚠️ Não foi possível aceder ao canal '%s': %s. Ignorando este canal.", ch, e)
+
+    if not valid_chats:
+        logger.error("❌ Nenhum canal de origem válido foi encontrado. Verifica a variável SOURCE_CHANNELS.")
+    else:
+        logger.info("🎧 A escutar em tempo real %d canais válidos!", len(valid_chats))
+
+        @client.on(events.NewMessage(chats=valid_chats))
+        async def handler(event):
+            try:
+                await process_incoming_message(client, event.message, cfg, state, state_file)
+            except Exception as e:
+                logger.error("Erro inesperado no handler de mensagens: %s", e)
 
     await client.run_until_disconnected()
 
