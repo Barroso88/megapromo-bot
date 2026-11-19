@@ -1,5 +1,5 @@
 {
- "offset": 249577594,
+ "offset": 249577595,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -12,7 +12,10 @@
   "https://www.chollometro.com/ofertas/flipper-zero-accesorios-oficiales-rebajados-2079688",
   "https://www.chollometro.com/ofertas/dyson-v8-cyclone-aspiradora-sin-cable-cepillo-motorbar-150-aw-2079696",
   "https://www.chollometro.com/ofertas/bowers-wilkins-px8-auriculares-inalambricos-con-cancelacion-de-ruido-bluetooth-50-carga-rapida-2079694",
-  "https://www.chollometro.com/ofertas/colgate-triple-accion-pasta-de-dientes-6x75ml-proteccion-anticaries-dientes-blancos-y-aliento-fresco-2079693"
+  "https://www.chollometro.com/ofertas/colgate-triple-accion-pasta-de-dientes-6x75ml-proteccion-anticaries-dientes-blancos-y-aliento-fresco-2079693",
+  "https://www.chollometro.com/ofertas/manfrotto-advanced-shoulder-bag-m-iii-para-camara-reflex-y-sin-espejo-con-objetivo-estuche-para-camara-con-soporte-para-tripode-y-funda-2079692",
+  "https://www.chollometro.com/ofertas/dispensador-de-agua-con-deposito-7l-2079687",
+  "https://www.chollometro.com/ofertas/poco-f9-ultra-16512-negro-8050mah-carga-100-w-snapdragon-8-elite-gen-5-2079685"
  ],
  "pending": {
   "3": {
@@ -75,12 +78,26 @@
    "price": "267,77€",
    "image": "https://static.chollometro.com/threads/raw/ydNdL/2079694_1/re/150x150/qt/55/2079694_1.jpg"
   },
-  "16": {
-   "title": "Colgate Triple Acción Pasta de Dientes 6x75ml Protección Anticaries, Dientes Blancos y Aliento Fresco.",
-   "category": "Salud y belleza",
-   "price": "7,13€",
-   "image": "https://static.chollometro.com/threads/raw/sgyAS/2079693_1/re/150x150/qt/55/2079693_1.jpg"
+  "19": {
+   "title": "Manfrotto Advanced Shoulder Bag M III, para Cámara Réflex y sin Espejo con Objetivo, Estuche para Cámara con Soporte para Trípode y Funda",
+   "category": "Moda y accesorios",
+   "price": "35,99€",
+   "image": "https://static.chollometro.com/threads/raw/8q0pJ/2079692_1/re/150x150/qt/55/2079692_1.jpg"
+  },
+  "20": {
+   "title": "Dispensador de Agua con Depósito 7L",
+   "category": "Hogar, vivienda y oficina",
+   "price": "39,99€",
+   "image": "https://static.chollometro.com/threads/raw/KX4Wx/2079687_1/re/150x150/qt/55/2079687_1.jpg"
+  },
+  "21": {
+   "title": "POCO F9 Ultra, 16+512, Negro, 8050mAh, carga 100 W Snapdragon 8 Elite Gen 5",
+   "category": "Electrónica",
+   "price": "807,40€",
+   "image": "https://static.chollometro.com/threads/raw/tzLEG/2079685_1/re/150x150/qt/55/2079685_1.jpg"
   }
  },
- "published": []
+ "published": [
+  "B0CBKDDMPF"
+ ]
 }
