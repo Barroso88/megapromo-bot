@@ -1,6 +1,26 @@
 {
- "offset": 0,
- "seen": [],
- "pending": {},
+ "offset": 249577593,
+ "seen": [
+  "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
+  "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
+  "https://www.chollometro.com/ofertas/edredon-nordico-pikolin-de-plumon-de-oca-220-250-cm-por-9999-eur-en-amazon-2079369"
+ ],
+ "pending": {
+  "3": {
+   "title": "Baliza V16 Homologada DGT con Geolocalización | Luz de Emergencia Coche LED 360° 1km | Conectada DGT 3.0 (Pack x2)",
+   "category": "Coches y motos",
+   "price": "20,50€"
+  },
+  "4": {
+   "title": "Oraldine Enjuague Bucal Antiséptico Uso Diario, 400 ml y 200 ml, 2 uds Antifúngico, Anti Periodontitis, Gingivitis,Halitosis, Con Hexeditina",
+   "category": "Salud y belleza",
+   "price": "4,97€"
+  },
+  "5": {
+   "title": "Edredón nórdico Pikolin de plumón de oca, 220 × 250 cm, por 99,99 € en Amazon",
+   "category": "Hogar, vivienda y oficina",
+   "price": "99,99€"
+  }
+ },
  "published": []
 }
