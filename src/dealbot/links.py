@@ -10,7 +10,7 @@ PATH_ASIN_RE = re.compile(r"/(?:dp|gp/product)/([A-Z0-9]{10})(?:[/?]|$)")
 URL_RE = re.compile(r"https?://[^\s<>]+")
 PUNCT = ".,;:!?)]}'\"»"
 AMAZON_HOSTS = {"amazon.es", "www.amazon.es"}
-SHORT_HOSTS = {"amzn.to", "www.amzn.to", "a.co", "amzn.eu"}
+SHORT_HOSTS = {"amzn.to", "www.amzn.to", "a.co", "amzn.eu", "bit.ly", "tinyurl.com", "cutt.ly", "t.co"}
 
 
 class LinkError(Exception):

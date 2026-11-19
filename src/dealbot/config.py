@@ -18,3 +18,35 @@ class Config:
             raise SystemExit(f"Variáveis de ambiente em falta: {', '.join(missing)}")
         e = {k: os.environ[k].strip() for k in REQUIRED}  # segredos colados costumam trazer \n ou espaços
         return cls(e["TELEGRAM_BOT_TOKEN"], e["OWNER_CHAT_ID"], e["CHANNEL_ID"], e["AMAZON_TAG"])
+
+
+LISTENER_REQUIRED = ("TELEGRAM_API_ID", "TELEGRAM_API_HASH", "AMAZON_TAG", "SOURCE_CHANNELS", "TARGET_CHANNEL")
+
+
+@dataclass(frozen=True)
+class ListenerConfig:
+    api_id: int
+    api_hash: str
+    amazon_tag: str
+    source_channels: list[str]
+    target_channel: str
+    session_path: str = "data/dealbot.session"
+
+    @classmethod
+    def from_env(cls) -> "ListenerConfig":
+        missing = [k for k in LISTENER_REQUIRED if not os.environ.get(k, "").strip()]
+        if missing:
+            raise SystemExit(f"Variáveis de ambiente em falta para o monitor: {', '.join(missing)}")
+
+        sources = [c.strip() for c in os.environ["SOURCE_CHANNELS"].split(",") if c.strip()]
+        session = os.environ.get("TELEGRAM_SESSION_PATH", "data/dealbot.session").strip()
+
+        return cls(
+            api_id=int(os.environ["TELEGRAM_API_ID"].strip()),
+            api_hash=os.environ["TELEGRAM_API_HASH"].strip(),
+            amazon_tag=os.environ["AMAZON_TAG"].strip(),
+            source_channels=sources,
+            target_channel=os.environ["TARGET_CHANNEL"].strip(),
+            session_path=session,
+        )
+

@@ -1,28 +1,102 @@
-# Bot de promoções Amazon.es → Telegram (semi-automático)
+# MegaPromo: Monitor de Promoções Amazon.es para Telegram (Piggybacking)
 
-O bot propõe-te ofertas da Amazon no Telegram. Tu respondes com o link da amazon.es e ele publica no canal com o **teu** código de afiliado.
+Sistema automático em tempo real que monitoriza canais públicos de promoções no Telegram (usando Telethon), extrai os produtos da **Amazon Espanha**, substitui as tags de afiliado pela **tua tag**, gera automaticamente um **cartão visual com a imagem de marca do teu canal** (Pillow) e publica no teu canal.
 
-## Configuração (uma vez)
-1. **Criar o bot:** no Telegram, fala com `@BotFather` → `/newbot` → guarda o token.
-2. **Criar o canal** (público ou privado) e adicionar o bot como **administrador** com permissão para publicar.
-3. **OWNER_CHAT_ID:** envia `/start` ao teu bot e abre `https://api.telegram.org/bot<TOKEN>/getUpdates` no browser; copia `message.chat.id`. (Faz isto antes de ativar o workflow, para o bot não consumir a mensagem.)
-4. **CHANNEL_ID:** `@nomedocanal` (canal público) ou o id numérico `-100…` (privado).
-5. **Repositório no GitHub:** faz push deste projeto e cria, em *Settings → Secrets and variables → Actions*, os segredos `TELEGRAM_BOT_TOKEN`, `OWNER_CHAT_ID`, `CHANNEL_ID`, `AMAZON_TAG` (ex.: `oteu-21`, o teu Tracking ID da amazon.es).
-   > **Custo:** o workflow corre ~8 600 vezes por mês. Num repositório **público** o GitHub Actions é grátis e ilimitado, e não expõe segredos (ficam em *Secrets*; o repositório só tem código e `data/state.json` com títulos e ASINs já publicados). Num repositório **privado** o plano gratuito dá 2 000 minutos/mês e o bot ficaria parado a meio do mês: nesse caso muda o cron em `.github/workflows/bot.yml` para `*/30 7-22 * * *` (~950 min/mês).
-6. Em *Actions* corre o workflow `dealbot` manualmente (*Run workflow*). Passa a correr sozinho de ~5 em ~5 minutos.
+---
 
-## Uso diário
-- Chegam-te propostas (máx. 3 por execução, nunca entre as 23h e as 08h). Na primeira execução podes receber várias seguidas.
-- Abre a oferta, copia o link da amazon.es do produto (ou o link curto do Site Stripe) e **responde à mensagem da proposta** com esse link.
-- Também podes colar um link com o título a seguir (`https://www.amazon.es/dp/... Bola adidas`) sem responder.
-- O bot publica no canal e confirma. Produtos repetidos não são republicados.
+## 🚀 Como Funciona o Fluxo Automático
 
-## Regras a respeitar
-- Só links `amazon.es`. O bot usa sempre o teu `tag`, nunca o de terceiros.
-- O aviso de afiliado vai em todos os posts. Os posts não mostram preço.
-- A conta de Associados costuma fechar sem vendas qualificadas em 180 dias: confirma a tua data no painel.
+1. **Escuta Contínua:** O script fica ligado ao Telegram através de MTProto (Telethon) a monitorizar 3 a 5 canais de referência em tempo real.
+2. **Filtro & ASIN:** Quando surge uma mensagem com link da Amazon Espanha (direto `amazon.es` ou encurtado `amzn.to`/`amzn.eu`), descompacta o redirecionamento e extrai o código ASIN (10 caracteres).
+3. **Deduplicação:** Verifica se o produto já foi publicado (em `data/state.json`). Se for repetido, ignora.
+4. **Edição Visual & Branding:**
+   - Descarrega a foto original do produto.
+   - Gera um cartão quadrado elegante (1080x1080) com fundo limpo, a foto do produto, o título e uma faixa inferior com o handle do **teu** canal.
+   - Limpa menções a outros canais (`@outros`, links `t.me/`, etc.).
+   - Insere o teu link limpo de afiliado (`https://www.amazon.es/dp/{ASIN}?tag={TUA_TAG}`) e o aviso legal de afiliado da Amazon.
+5. **Publicação:** Envia imediatamente para o teu canal de Telegram.
 
-## Desenvolvimento
+---
+
+## 📋 Pré-requisitos
+
+1. **Credenciais da API do Telegram:**
+   - Vai a [my.telegram.org](https://my.telegram.org) e faz login com o teu número de telemóvel.
+   - Clica em **API development tools** e cria uma aplicação (qualquer nome serve).
+   - Guarda o **App api_id** e o **App api_hash**.
+2. **Tag de Afiliado da Amazon:**
+   - O teu Tracking ID da Amazon.es (ex.: `oteu-21`).
+3. **Canais:**
+   - Canais de origem a monitorizar (ex.: `@canal1, @canal2`).
+   - O teu canal de destino (ex.: `@oteucanal`). Garante que a tua conta do Telegram é administradora com permissão de publicar mensagens.
+
+---
+
+## 🔑 Passo 1: Autenticação Inicial da Sessão
+
+Antes de subir para o Unraid, autentica a tua conta localmente para gerar o ficheiro de sessão:
+
+```bash
+# 1. Instala dependências
+pip install -r requirements.txt
+
+# 2. Executa o assistente de login
+python login.py
 ```
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest && .venv/bin/pytest
+Insere o `api_id`, `api_hash`, o teu número de telefone e o código recebido no Telegram.  
+Isto criará o ficheiro `data/dealbot.session`.
+
+---
+
+## 🐳 Passo 2: Executar no Unraid (Docker)
+
+### Opção A: Docker Compose (Recomendado)
+
+Cria uma pasta no teu Unraid (ex.: `/mnt/user/appdata/dealbot`), copia a pasta `data/` com a tua sessão e este projeto, e inicia o container:
+
+```yaml
+services:
+  dealbot:
+    build: .
+    container_name: dealbot
+    restart: unless-stopped
+    volumes:
+      - /mnt/user/appdata/dealbot/data:/app/data
+    environment:
+      - TELEGRAM_API_ID=12345678
+      - TELEGRAM_API_HASH=abcdef0123456789abcdef0123456789
+      - AMAZON_TAG=oteu-21
+      - SOURCE_CHANNELS=@canal_origem1,@canal_origem2
+      - TARGET_CHANNEL=@oteucanal
+      - TELEGRAM_SESSION_PATH=/app/data/dealbot.session
+```
+
+Corre:
+```bash
+docker compose up -d
+```
+
+### Opção B: Adicionar Container manualmente na GUI do Unraid
+
+1. No separador **Docker** do Unraid, clica em **Add Container**.
+2. **Name:** `dealbot`
+3. **Repository:** Compila a imagem localmente ou cria a partir do `Dockerfile`.
+4. **Volume Mapping:**
+   - Container Path: `/app/data`
+   - Host Path: `/mnt/user/appdata/dealbot/data`
+5. **Variáveis de Ambiente:**
+   - `TELEGRAM_API_ID`: O teu API ID numérico.
+   - `TELEGRAM_API_HASH`: O teu hash do Telegram.
+   - `AMAZON_TAG`: O teu tracking ID da Amazon.es (ex: `oteu-21`).
+   - `SOURCE_CHANNELS`: Canais a vigiar separados por vírgula (`@canal1,@canal2`).
+   - `TARGET_CHANNEL`: O teu canal (`@teucanal`).
+   - `TELEGRAM_SESSION_PATH`: `/app/data/dealbot.session`
+
+---
+
+## 🧪 Testes
+
+Para correr a suite de testes automatizados:
+```bash
+.venv/bin/pytest
 ```

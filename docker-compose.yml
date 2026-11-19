@@ -1,0 +1,14 @@
+services:
+  dealbot:
+    build: .
+    container_name: dealbot
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TELEGRAM_API_ID=37175577
+      - TELEGRAM_API_HASH=73f860a71855ab034e248b7cdcbfc681
+      - AMAZON_TAG=megapromopt-21
+      - SOURCE_CHANNELS=@descontosAinanas,@bibliamtengarsada,@cupoesestafixe,@cupoes
+      - TARGET_CHANNEL=@megapromo_pt
+      - TELEGRAM_SESSION_PATH=/app/data/dealbot.session

@@ -3,3 +3,10 @@ __pycache__/
 .superpowers/
 *.pyc
 .pytest_cache/
+.env
+*.session
+*.session-journal
+data/*.session
+data/.auth_temp.json
+*.tmp
+
