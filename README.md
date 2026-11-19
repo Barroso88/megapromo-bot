@@ -24,5 +24,5 @@ O bot propõe-te ofertas da Amazon no Telegram. Tu respondes com o link da amazo
 
 ## Desenvolvimento
 ```
-python3 -m venv .venv && .venv/bin/pip install pytest && .venv/bin/pytest
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest && .venv/bin/pytest
 ```
