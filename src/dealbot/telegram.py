@@ -8,6 +8,13 @@ class TelegramError(Exception):
     pass
 
 
+def _description(e: urllib.error.HTTPError) -> str:
+    try:
+        return str(json.loads(e.read().decode()).get("description", ""))
+    except Exception:
+        return ""
+
+
 class Telegram:
     def __init__(self, token: str, opener=urllib.request.urlopen):
         self._token = token
@@ -23,6 +30,8 @@ class Telegram:
         try:
             with self._opener(req, timeout=30) as resp:
                 data = json.loads(resp.read().decode())
+        except urllib.error.HTTPError as e:
+            raise TelegramError(f"{method}: HTTP {e.code} {_description(e)}".strip()) from None
         except Exception as e:
             raise TelegramError(f"{method}: {type(e).__name__}") from None
         if not data.get("ok"):

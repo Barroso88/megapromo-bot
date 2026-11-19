@@ -67,3 +67,14 @@ def test_network_error_raises_without_token():
     with pytest.raises(TelegramError) as e:
         tg.send_message(1, "a")
     assert TOKEN not in str(e.value)
+
+
+def test_http_error_reports_status_and_description_without_token():
+    import io
+
+    body = io.BytesIO(json.dumps({"ok": False, "error_code": 401, "description": "Unauthorized"}).encode())
+    exc = urllib.error.HTTPError(f"https://api.telegram.org/bot{TOKEN}/getUpdates", 401, "Unauthorized", {}, body)
+    tg, _ = make(exc=exc)
+    with pytest.raises(TelegramError) as e:
+        tg.get_updates(0)
+    assert "401" in str(e.value) and "Unauthorized" in str(e.value) and TOKEN not in str(e.value)
