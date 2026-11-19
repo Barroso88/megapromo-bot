@@ -1,6 +1,5 @@
-"""Cartão de imagem do canal: barra MEGAPROMO, foto do produto, logótipo, título e (opcional) preços."""
+"""Cartão de imagem do canal: barra MEGAPROMO, foto do produto, logótipo e (opcional) preços. O título vai na legenda."""
 import io
-import textwrap
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, UnidentifiedImageError
@@ -119,25 +118,13 @@ def make_card(photo: bytes, title: str, category: str, handle: str,
         logo = Image.open(LOGO).convert("RGBA").resize((200, 200), Image.LANCZOS)
         card.paste(logo, (50, S - 250), logo)
 
-    lines = textwrap.wrap(title, 30 if not price else 34)
-    max_lines = 2 if price else 3
-    if len(lines) > max_lines:
-        lines = lines[:max_lines]
-        lines[-1] = lines[-1][: len(lines[-1]) - 1].rstrip() + "…"
-    y = BAND_TOP + 40
-    if category and not price:
-        d.text((290, y), category.upper()[:28], font=_font(28), fill=ORANGE)
-        y += 46
-    fs = 36 if price else 42
-    for line in lines:
-        d.text((290, y), line, font=_font(fs), fill=NAVY)
-        y += fs + 12
-
     if price:
         card = _price_block(card, price, old_price)
     else:
-        fh = _font(34)
-        d.text((S - 50 - d.textlength(handle, font=fh), S - 70), handle, font=fh, fill=BLUE)
+        fh = _font(52)
+        d.text((290, S - 190), handle, font=fh, fill=NAVY)
+        if category:
+            d.text((290, S - 120), category.upper()[:28], font=_font(32), fill=ORANGE)
 
     out = io.BytesIO()
     card.save(out, "JPEG", quality=90)
