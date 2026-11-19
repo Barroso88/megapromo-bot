@@ -30,18 +30,16 @@ def test_invalid_photo_raises_valueerror():
         make_card(b"nao e imagem", "t", "c", "@canal")
 
 
-def test_card_with_prices_has_blue_price_block():
+def test_card_with_prices_has_black_price_block():
     out = make_card(photo(), "Televisor TCL 55", "Televisores", "@canal", price="284,80", old_price="507,25")
     img = Image.open(io.BytesIO(out))
     assert img.size == (1080, 1080)
-    r, g, b = img.getpixel((900, 1030))
-    assert b > 150 and r < 60                        # bloco azul do preço
+    assert sum(img.getpixel((1000, 1060))) < 120     # bloco preto do preço
 
 
-def test_card_without_prices_has_no_blue_block():
+def test_card_without_prices_has_no_black_block():
     img = Image.open(io.BytesIO(make_card(photo(), "Televisor", "", "@canal")))
-    r, g, b = img.getpixel((900, 1030))
-    assert not (b > 150 and r < 60)
+    assert sum(img.getpixel((1000, 1060))) > 400
 
 
 def test_discount_percent():

@@ -3,11 +3,11 @@ import io
 import textwrap
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, UnidentifiedImageError
 
 S = 1080
 NAVY, ORANGE, WHITE = (16, 24, 48), (255, 122, 0), (255, 255, 255)
-BLUE, GREY_BG, GREY_TXT, RED, GOLD = (0, 112, 206), (244, 245, 248), (100, 112, 135), (200, 30, 60), (255, 215, 0)
+BLUE, BLACK_L, BLACK_R, GREY_BG, GREY_TXT, RED, GOLD = (0, 112, 206), (62, 64, 70), (6, 6, 8), (244, 245, 248), (100, 112, 135), (200, 30, 60), (255, 215, 0)
 HEADER_H, BAND_TOP = 100, 760
 LOGO = Path(__file__).parent / "assets" / "logo.png"
 FONTS = (
@@ -49,18 +49,51 @@ def _band(d: ImageDraw.ImageDraw) -> None:
     d.polygon(pts, fill=GREY_BG)
 
 
-def _starburst(d, cx, cy, r, pct):
+def _starburst(card, cx, cy, r, pct):
     import math
     pts = []
-    for i in range(24):
-        a = math.pi * 2 * i / 24
-        rr = r if i % 2 == 0 else r * 0.82
-        pts.append((cx + rr * math.cos(a), cy + rr * math.sin(a)))
-    d.polygon(pts, fill=GOLD)
-    f = _font(40)
-    t = f"-{pct}%"
-    w = d.textlength(t, font=f)
-    d.text((cx - w / 2, cy - 24), t, font=f, fill=(170, 20, 20))
+    for i in range(32):
+        ang = math.pi * 2 * i / 32 + 0.1
+        rr = r if i % 2 == 0 else r * 0.86
+        pts.append((cx + rr * math.cos(ang), cy + rr * math.sin(ang)))
+    shadow = Image.new("RGBA", card.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).polygon([(x + 5, y + 9) for x, y in pts], fill=(0, 0, 0, 110))
+    card.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(7))) if card.mode == "RGBA" else None
+    return pts
+
+
+def _price_block(card: Image.Image, price: str, old_price: str | None) -> Image.Image:
+    """Bloco do preço: degradê preto, canto superior-esquerdo bem arredondado, selo de desconto com sombra."""
+    card = card.convert("RGBA")
+    x0, y0, w, h = 540, S - 150, S - 540, 190
+    grad = Image.new("RGB", (w, h))
+    gd = ImageDraw.Draw(grad)
+    for x in range(w):
+        t = (x / w) ** 1.3
+        gd.line((x, 0, x, h), fill=tuple(int(BLACK_L[i] + (BLACK_R[i] - BLACK_L[i]) * t) for i in range(3)))
+    mask = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, w + 60, h + 60), radius=95, fill=255)
+    card.paste(grad, (x0, y0), mask)
+
+    d = ImageDraw.Draw(card)
+    fp = _font(80)
+    pt = f"{price}€"
+    d.text((S - 40 - d.textlength(pt, font=fp), S - 135), pt, font=fp, fill=WHITE)
+    if old_price:
+        fo = _font(46)
+        ot = f"{old_price}€"
+        ox = S - 60 - d.textlength(ot, font=fo)
+        d.text((ox, S - 218), ot, font=fo, fill=GREY_TXT)
+        d.line((ox - 8, S - 194, S - 52, S - 194), fill=RED, width=5)
+        pct = discount(price, old_price)
+        if pct:
+            pts = _starburst(card, 470, S - 98, 70, pct)
+            d = ImageDraw.Draw(card)
+            d.polygon(pts, fill=GOLD)
+            f = _font(40)
+            tx = f"-{pct}%"
+            d.text((470 - d.textlength(tx, font=f) / 2, S - 98 - 24), tx, font=f, fill=(190, 20, 20))
+    return card.convert("RGB")
 
 
 def make_card(photo: bytes, title: str, category: str, handle: str,
@@ -101,19 +134,7 @@ def make_card(photo: bytes, title: str, category: str, handle: str,
         y += fs + 12
 
     if price:
-        d.rounded_rectangle((540, S - 150, S + 40, S + 40), radius=48, fill=BLUE)
-        fp = _font(78)
-        pt = f"{price}€"
-        d.text((S - 40 - d.textlength(pt, font=fp), S - 135), pt, font=fp, fill=WHITE)
-        if old_price:
-            fo = _font(44)
-            ot = f"{old_price}€"
-            ox = S - 60 - d.textlength(ot, font=fo)
-            d.text((ox, S - 215), ot, font=fo, fill=GREY_TXT)
-            d.line((ox - 6, S - 192, S - 54, S - 192), fill=RED, width=5)
-            pct = discount(price, old_price)
-            if pct:
-                _starburst(d, 470, S - 130, 70, pct)
+        card = _price_block(card, price, old_price)
     else:
         fh = _font(34)
         d.text((S - 50 - d.textlength(handle, font=fh), S - 70), handle, font=fh, fill=BLUE)
