@@ -13,8 +13,8 @@ class Config:
 
     @classmethod
     def from_env(cls) -> "Config":
-        missing = [k for k in REQUIRED if not os.environ.get(k)]
+        missing = [k for k in REQUIRED if not os.environ.get(k, "").strip()]
         if missing:
             raise SystemExit(f"Variáveis de ambiente em falta: {', '.join(missing)}")
-        e = os.environ
+        e = {k: os.environ[k].strip() for k in REQUIRED}  # segredos colados costumam trazer \n ou espaços
         return cls(e["TELEGRAM_BOT_TOKEN"], e["OWNER_CHAT_ID"], e["CHANNEL_ID"], e["AMAZON_TAG"])

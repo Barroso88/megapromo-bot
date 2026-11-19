@@ -166,3 +166,10 @@ def test_config_from_env_missing(monkeypatch):
     for k, v in (("TELEGRAM_BOT_TOKEN", "t"), ("OWNER_CHAT_ID", "1"), ("CHANNEL_ID", "@c"), ("AMAZON_TAG", "x-21")):
         monkeypatch.setenv(k, v)
     assert Config.from_env().amazon_tag == "x-21"
+
+
+def test_config_strips_whitespace_and_newlines(monkeypatch):
+    for k, v in (("TELEGRAM_BOT_TOKEN", " 123:abc\n"), ("OWNER_CHAT_ID", "1 \r\n"), ("CHANNEL_ID", "@c\n"), ("AMAZON_TAG", "x-21 ")):
+        monkeypatch.setenv(k, v)
+    cfg = Config.from_env()
+    assert cfg == Config("123:abc", "1", "@c", "x-21")
