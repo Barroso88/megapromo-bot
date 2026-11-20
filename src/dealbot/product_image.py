@@ -44,9 +44,11 @@ def _brand_bar_bottom(im: Image.Image) -> int | None:
         return None
     box = (max(box[0] - k // 2, 0), max(box[1] - k // 2, 0), min(box[2] + k // 2, w), min(box[3] + k // 2, up.height))
     bw, bh = box[2] - box[0], box[3] - box[1]
-    if bw < 0.5 * w or bh > 0.25 * h or box[1] > 0.2 * h:
+    if bw < 0.5 * w or bh > 0.25 * h or box[1] > 0.1 * h:      # uma barra de marca está mesmo no topo
         return None
-    if mask.crop(box).histogram()[255] / (bw * bh) < 0.6:     # preenchida, não um produto colorido
+    fill = mask.crop(box).histogram()[255] / (bw * bh)
+    flush_banner = box[1] <= 2 and bw >= 0.9 * w              # barra de lado a lado encostada ao topo, mesmo com logótipo
+    if fill < (0.45 if flush_banner else 0.6):                # preenchida, não um produto colorido
         return None
     return box[3] + 2
 

@@ -130,3 +130,34 @@ def test_product_cut_by_the_price_band_fades_out_instead_of_a_hard_edge():
     lower_half = col[len(col) // 2:]
     assert max(abs(a - b) for a, b in zip(lower_half, lower_half[1:])) < 60     # sem corte seco: passa a branco aos poucos
     assert min(lower_half) < 100 and lower_half[-1] > 235                       # mas o produto continua lá em cima
+
+
+@needs_ocr
+def test_full_width_brand_bar_flush_with_the_top_and_with_a_logo_is_removed():
+    # Como a barra "dezcontos" real: azul de lado a lado, encostada ao topo, com logótipo branco (preenchimento ~50 %).
+    im = Image.new("RGB", (600, 500), (255, 255, 255))
+    d = ImageDraw.Draw(im)
+    d.rectangle((0, 0, 600, 60), fill=(66, 65, 243))
+    d.rectangle((30, 8, 300, 52), fill=(255, 255, 255))
+    d.rectangle((350, 8, 450, 52), fill=(255, 255, 255))
+    d.ellipse((150, 110, 430, 290), fill=(30, 40, 60))
+    d.polygon([(0, 500), (0, 360), (300, 345), (600, 335), (600, 500)], fill=(244, 244, 247))
+    d.rounded_rectangle((300, 390, 600, 460), radius=24, fill=(240, 100, 20))
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=95)
+    out = Image.open(io.BytesIO(isolate_product(buf.getvalue())))
+    assert not has_blue(out) and not has_orange(out)
+
+
+@needs_ocr
+def test_a_saturated_product_near_the_top_is_not_mistaken_for_a_brand_bar():
+    im = Image.new("RGB", (600, 500), (255, 255, 255))
+    d = ImageDraw.Draw(im)
+    d.rectangle((80, 80, 520, 160), fill=(40, 40, 230))          # produto azul largo, mas longe do topo
+    d.rectangle((80, 160, 520, 300), fill=(30, 40, 60))
+    d.polygon([(0, 500), (0, 360), (300, 345), (600, 335), (600, 500)], fill=(244, 244, 247))
+    d.rounded_rectangle((300, 390, 600, 460), radius=24, fill=(240, 100, 20))
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=95)
+    out = Image.open(io.BytesIO(isolate_product(buf.getvalue())))
+    assert has_blue(out)                                         # o produto azul fica
