@@ -100,3 +100,51 @@ def test_listener_card_shows_discount_badge_computed_from_image_prices(tmp_path)
                if (lambda p: p[0] > 230 and 190 < p[1] < 230 and p[2] < 60)(card.getpixel((x, y))))
     assert gold > 30                                        # selo amarelo de desconto presente
     assert sum(card.getpixel((1000, 1060))) < 120           # bloco preto de preço presente
+
+
+class _FakeTesseract:
+    """Tesseract falso que devolve, por ordem, as leituras (ou um erro) de uma lista."""
+
+    class TesseractError(Exception):
+        pass
+
+    def __init__(self, outputs):
+        self.outputs, self.calls = list(outputs), 0
+
+    def image_to_string(self, image, config=""):
+        out = self.outputs[self.calls] if self.calls < len(self.outputs) else ""
+        self.calls += 1
+        if out == "ERRO":
+            raise self.TesseractError("Image too small to scale!! (2x36 vs min width of 3) Line cannot be recognized!!")
+        return out
+
+
+def _run_with_fake(monkeypatch, outputs):
+    from dealbot import price_extractor as pe
+    fake = _FakeTesseract(outputs)
+    monkeypatch.setattr(pe, "pytesseract", fake)
+    return pe.extract_prices_from_image(banner()), fake
+
+
+# Leituras reais do contentor (Tesseract 5.5.0) na foto do drone @cupoes: 9 variantes x (psm 11, psm 7).
+CONTAINER_TRANSCRIPT = [
+    "152,47€ 71,14€", "", "", "", "152,47€", "", "", "ERRO", "", "", "152,47€ 71,14€", "",
+    "1,14€", "", "1,14€", "", "71,14€", "",
+]
+
+
+def test_one_failing_ocr_call_does_not_throw_away_the_good_readings(monkeypatch):
+    result, fake = _run_with_fake(monkeypatch, CONTAINER_TRANSCRIPT)
+    assert result == ("152,47€", "71,14€")
+    assert fake.calls == 18                                    # leu todas as variantes, apesar do erro
+
+
+def test_a_misread_number_with_many_votes_does_not_hide_the_real_pair(monkeypatch):
+    outputs = ["152,47€ 71,14€", "1,14€", "152,47€ 71,14€", "1,14€", "152,47€", "1,14€", "1,14€", "71,14€"]
+    result, _ = _run_with_fake(monkeypatch, outputs)
+    assert result == ("152,47€", "71,14€")                      # 1,14 tem 4 votos mas dá um desconto impossível
+
+
+def test_all_calls_failing_returns_nothing_without_raising(monkeypatch):
+    result, _ = _run_with_fake(monkeypatch, ["ERRO"] * 20)
+    assert result == (None, None)

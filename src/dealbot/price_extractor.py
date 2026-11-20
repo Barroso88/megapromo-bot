@@ -1,7 +1,11 @@
 import io
+import itertools
+import logging
 import re
 from pathlib import Path
 from PIL import Image, ImageChops, ImageFilter, ImageOps
+
+logger = logging.getLogger("dealbot.ocr")
 
 try:
     import pytesseract
@@ -102,24 +106,33 @@ def extract_prices_from_image(photo_bytes: bytes) -> tuple[str | None, str | Non
         return None, None
     votes: dict[float, int] = {}
     try:
-        for variant in _ocr_variants(im):
-            for psm in ("11", "7"):
+        variants = list(_ocr_variants(im))
+    except Exception as e:
+        logger.warning("OCR: não foi possível preparar a imagem: %s: %s", type(e).__name__, e)
+        return None, None
+    failures = 0
+    for variant in variants:
+        for psm in ("11", "7"):
+            try:
                 text = pytesseract.image_to_string(variant, config=OCR_CONFIG.replace("11", psm))
-                for m in PRICE_TOKEN.finditer(text):
-                    value = float(f"{m.group(1).replace('.', '')}.{m.group(2)}")
-                    if 0.5 <= value <= 20000:
-                        votes[value] = votes.get(value, 0) + 1
-    except Exception:
-        return None, None
+            except Exception as e:           # uma variante que falha (ex: 'Image too small to scale') não anula as outras
+                failures += 1
+                logger.debug("OCR: leitura falhou (psm %s): %s: %s", psm, type(e).__name__, e)
+                continue
+            for m in PRICE_TOKEN.finditer(text):
+                value = float(f"{m.group(1).replace('.', '')}.{m.group(2)}")
+                if 0.5 <= value <= 20000:
+                    votes[value] = votes.get(value, 0) + 1
+    if failures:
+        logger.info("OCR: %d leituras falharam e foram ignoradas", failures)
     # Cada preço tem de ter sido lido em pelo menos 2 variantes: leituras soltas costumam ser enganos do OCR.
-    reliable = [v for v, n in votes.items() if n >= MIN_VOTES]
-    if len(reliable) < 2:
-        return None, None
-    top = sorted(reliable, key=lambda v: (-votes[v], -v))[:2]
-    new, old = min(top), max(top)
-    if not 3 <= (1 - new / old) * 100 <= 90:     # descontos fora disto são quase sempre leituras erradas
-        return None, None
-    return _fmt(old), _fmt(new)
+    reliable = sorted((v for v, n in votes.items() if n >= MIN_VOTES), key=lambda v: (-votes[v], -v))
+    # Primeiro par plausível (desconto 3-90 %): um número lido por engano não esconde o par verdadeiro.
+    for a, b in itertools.combinations(reliable, 2):
+        new, old = min(a, b), max(a, b)
+        if 3 <= (1 - new / old) * 100 <= 90:
+            return _fmt(old), _fmt(new)
+    return None, None
 
 
 def extract_discount_pct(text: str) -> int | None:
