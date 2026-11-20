@@ -25,11 +25,12 @@ logger = logging.getLogger("dealbot.listener")
 
 async def _audit_discard(client, cfg: ListenerConfig, source: str, asin: str, url: str, reason: str,
                          data_dir: Path | None = None, title: str = "",
-                         price_before: str | None = None, price_after: str | None = None, excerpt: str = "") -> None:
+                         price_before: str | None = None, price_after: str | None = None, excerpt: str = "",
+                         photo: bytes | None = None) -> None:
     """Regista no log, no dashboard e no chat de auditoria (se houver) uma oferta que NÃO foi publicada."""
     logger.info("🚫 Oferta %s descartada: %s", asin, reason)
     if data_dir is not None:
-        save_discard_to_history(data_dir, asin, title, source, url, reason, price_before, price_after, excerpt)
+        save_discard_to_history(data_dir, asin, title, source, url, reason, price_before, price_after, excerpt, photo)
     if not cfg.audit_chat:
         return
     try:
@@ -177,7 +178,8 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
             await _audit_discard(client, cfg, source_display, detected_asin, original_url,
                                  "preços antes/depois não detetados",
                                  data_dir=state_file.parent, title=title,
-                                 price_before=read_before, price_after=read_after, excerpt=raw_text)
+                                 price_before=read_before, price_after=read_after, excerpt=raw_text,
+                                 photo=photo_data)
             return
 
     # Foto do produto: imagem oficial pelo ASIN; se não houver (ou estiver desligada), recorte da foto do canal.

@@ -254,8 +254,10 @@ def test_listener_config_price_flags(monkeypatch):
     for k in ("REQUIRE_PRICES", "SHOW_PRICES"):
         monkeypatch.delenv(k, raising=False)
     cfg = ListenerConfig.from_env()
-    assert cfg.show_prices is True and cfg.require_prices is False        # por defeito: preços opcionais
-    monkeypatch.setenv("REQUIRE_PRICES", " TRUE ")
+    assert cfg.show_prices is True and cfg.require_prices is True         # por defeito: preços obrigatórios
+    monkeypatch.setenv("REQUIRE_PRICES", " off ")
+    assert ListenerConfig.from_env().require_prices is False
+    monkeypatch.setenv("REQUIRE_PRICES", "1")
     assert ListenerConfig.from_env().require_prices is True
     monkeypatch.setenv("SHOW_PRICES", "0")
     assert ListenerConfig.from_env().show_prices is False

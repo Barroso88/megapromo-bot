@@ -84,3 +84,35 @@ def test_discard_excerpt_is_saved_and_served(server):
                             excerpt="Texto do post <b>com html</b>")
     assert json.loads(get(port, "/api/discarded")[1])[0]["excerpt"] == "Texto do post <b>com html</b>"
     assert "excerpt" in HTML_TEMPLATE and "esc(it.excerpt" in HTML_TEMPLATE
+
+
+def test_discard_photo_is_saved_listed_and_served(server):
+    import io
+    from PIL import Image
+    tmp, port = server
+    buf = io.BytesIO()
+    Image.new("RGB", (40, 30), (10, 20, 30)).save(buf, "PNG")
+    save_discard_to_history(tmp, asin="B0TEST1234", title="t", source="s", original_url="u", reason="r", photo=buf.getvalue())
+    item = json.loads(get(port, "/api/discarded")[1])[0]
+    assert item["image_file"] == "discarded_B0TEST1234.jpg"
+    status, body = get(port, "/images/discarded_B0TEST1234.jpg")
+    assert status == 200 and Image.open(io.BytesIO(body)).size == (40, 30)
+    assert "image_file" in HTML_TEMPLATE and "encodeURIComponent(it.image_file)" in HTML_TEMPLATE
+
+
+def test_old_discard_photos_are_pruned(server):
+    import io
+    from PIL import Image
+    tmp, _ = server
+    buf = io.BytesIO()
+    Image.new("RGB", (8, 8), (1, 2, 3)).save(buf, "JPEG")
+    for i in range(75):
+        save_discard_to_history(tmp, asin=f"B0{i:08d}", title="t", source="s", original_url="u", reason="r", photo=buf.getvalue())
+    assert len(list((tmp / "cards").glob("discarded_*.jpg"))) <= 60
+
+
+def test_discard_without_photo_or_asin_saves_no_file(server):
+    tmp, _ = server
+    save_discard_to_history(tmp, asin="", title="t", source="s", original_url="u", reason="r", photo=b"x")
+    save_discard_to_history(tmp, asin="B0TEST1234", title="t", source="s", original_url="u", reason="r")
+    assert list((tmp / "cards").glob("discarded_*.jpg")) == []

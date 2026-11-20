@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 logger = logging.getLogger("dealbot.web")
 
 SAFE_CARD_NAME = re.compile(r"[A-Za-z0-9_-]+\.jpg")
+SAFE_ASIN = re.compile(r"[A-Z0-9]{10}")
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="pt">
@@ -165,7 +166,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     ? `antes ${esc(it.price_before || '—')} · agora ${esc(it.price_after || '—')}` : 'sem preços lidos';
                 return `
                 <div class="bg-gray-900 border border-red-950 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div class="min-w-0">
+                    ${it.image_file ? `<img src="/images/${encodeURIComponent(it.image_file)}" class="w-20 h-20 object-contain rounded bg-white flex-none" alt="">` : ''}
+                    <div class="min-w-0 flex-1">
                         <p class="text-white font-semibold truncate" title="${esc(it.title)}">${esc(it.title) || '(sem título)'}</p>
                         <p class="text-xs text-gray-500 font-mono mt-0.5">${esc(it.asin)} · ${esc(it.source)} · ${esc(t)}</p>
                         <p class="text-xs text-red-300 mt-1">Motivo: ${esc(it.reason)} <span class="text-gray-500">(${prices})</span></p>
@@ -274,8 +276,34 @@ def save_deal_to_history(data_dir: Path, asin: str, title: str, source: str,
         logger.error("Erro ao guardar oferta no histórico web: %s", e)
 
 
+MAX_DISCARD_PHOTOS = 60
+
+
+def _save_discard_photo(data_dir: Path, asin: str, photo: bytes | None) -> str | None:
+    """Guarda a foto de origem de uma oferta descartada (para diagnosticar o OCR). Mantém só as últimas 60."""
+    if not photo or not SAFE_ASIN.fullmatch(asin or ""):
+        return None
+    try:
+        from io import BytesIO
+        from PIL import Image
+        cards = data_dir / "cards"
+        cards.mkdir(parents=True, exist_ok=True)
+        name = f"discarded_{asin}.jpg"
+        out = BytesIO()
+        Image.open(BytesIO(photo)).convert("RGB").save(out, "JPEG", quality=88)
+        (cards / name).write_bytes(out.getvalue())
+        old = sorted(cards.glob("discarded_*.jpg"), key=lambda f: f.stat().st_mtime, reverse=True)
+        for f in old[MAX_DISCARD_PHOTOS:]:
+            f.unlink(missing_ok=True)
+        return name
+    except Exception as e:
+        logger.error("Erro ao guardar a foto da oferta descartada: %s", e)
+        return None
+
+
 def save_discard_to_history(data_dir: Path, asin: str, title: str, source: str, original_url: str, reason: str,
-                            price_before: str | None = None, price_after: str | None = None, excerpt: str = ""):
+                            price_before: str | None = None, price_after: str | None = None, excerpt: str = "",
+                            photo: bytes | None = None):
     """Guarda uma oferta NÃO publicada (e o motivo) para aparecer no dashboard."""
     try:
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -286,10 +314,11 @@ def save_discard_to_history(data_dir: Path, asin: str, title: str, source: str, 
                 items = json.loads(file.read_text(encoding="utf-8"))
             except Exception:
                 items = []
+        image_file = _save_discard_photo(data_dir, asin, photo)
         items.insert(0, {
             "asin": asin, "title": title, "source": source, "original_url": original_url, "reason": reason,
             "price_before": price_before, "price_after": price_after, "excerpt": (excerpt or "")[:400],
-            "timestamp": datetime.now().isoformat(),
+            "image_file": image_file, "timestamp": datetime.now().isoformat(),
         })
         file.write_text(json.dumps(items[:200], ensure_ascii=False, indent=2), encoding="utf-8")
     except Exception as e:

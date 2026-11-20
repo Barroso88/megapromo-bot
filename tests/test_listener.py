@@ -282,7 +282,7 @@ def test_amazon_images_can_be_switched_off(tmp_path, monkeypatch):
     assert Image.open(io.BytesIO(seen["photo"])).height < Image.open(io.BytesIO(original)).height - 60
 
 
-def _link_case(tmp_path, monkeypatch, text, final_url=None, require_prices=False):
+def _link_case(tmp_path, monkeypatch, text, final_url=None, require_prices=True):
     import dealbot.links as links
     if final_url:
         monkeypatch.setattr(links, "_follow", lambda url, max_hops=5: final_url)
@@ -396,7 +396,7 @@ def test_price_failure_record_keeps_a_text_excerpt_to_diagnose_the_format(tmp_pa
 
 
 
-def _no_price_case(tmp_path, monkeypatch, text, show_prices=True, require_prices=False):
+def _no_price_case(tmp_path, monkeypatch, text, show_prices=True, require_prices=True):
     """Post com imagem da Amazon por ASIN mas sem preços legíveis; devolve (client, state, o que chegou ao make_card)."""
     import dealbot.listener as listener
     from test_amazon_image import jpeg
@@ -433,15 +433,15 @@ def _no_price_case(tmp_path, monkeypatch, text, show_prices=True, require_prices
 NO_PRICE_POST = "Super preço!\nHUGO BOSS The Scent | Eau de parfum feminino 30 ml\nhttps://www.amazon.es/dp/B0725GYPC9"
 
 
-def test_by_default_a_post_without_prices_is_published_with_a_card_without_price_block(tmp_path, monkeypatch):
-    client, state, seen = _no_price_case(tmp_path, monkeypatch, NO_PRICE_POST)
+def test_with_prices_optional_a_post_without_them_is_published_with_a_card_without_price_block(tmp_path, monkeypatch):
+    client, state, seen = _no_price_case(tmp_path, monkeypatch, NO_PRICE_POST, require_prices=False)
     client.send_file.assert_called_once()
     assert client.send_file.call_args.args[0] == "@meucanal" and "B0725GYPC9" in state.published
     assert seen["price"] is None and seen["old"] is None and seen["title"].startswith("HUGO BOSS The Scent")
 
 
-def test_when_prices_are_required_a_post_without_them_is_discarded(tmp_path, monkeypatch):
-    client, state, seen = _no_price_case(tmp_path, monkeypatch, NO_PRICE_POST, require_prices=True)
+def test_by_default_a_post_without_prices_is_discarded(tmp_path, monkeypatch):
+    client, state, seen = _no_price_case(tmp_path, monkeypatch, NO_PRICE_POST)
     client.send_file.assert_not_called()
     assert "B0725GYPC9" not in state.published and not seen
 
@@ -457,3 +457,15 @@ def test_prices_are_still_shown_when_both_are_read(tmp_path, monkeypatch):
     text = NO_PRICE_POST + "\n❌ Antes: 90,00€\n✅ Agora: 60,00€"
     client, state, seen = _no_price_case(tmp_path, monkeypatch, text)
     assert (seen["old"], seen["price"]) == ("90,00€", "60,00€")
+
+
+def test_price_failure_keeps_the_source_photo_for_diagnosis(tmp_path):
+    import io
+    import json
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (300, 200), (200, 30, 30)).save(buf, "JPEG")
+    _discard_case(tmp_path, "Gafas Hawkers polarizadas\nhttps://www.amazon.es/dp/B09NYDLHYZ", buf.getvalue(), audit="")
+    item = json.loads((tmp_path / "discarded.json").read_text())[0]
+    assert item["image_file"] == "discarded_B09NYDLHYZ.jpg"
+    assert Image.open(tmp_path / "cards" / item["image_file"]).size == (300, 200)

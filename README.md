@@ -110,6 +110,6 @@ O monitor tenta primeiro a imagem principal do produto pelo ASIN (`images-eu.ssl
 **Uso por conta e risco do dono.** Esse endereço não consta, pelo que se leu em 2026-11, do Acordo de Associados da Amazon.es como fonte autorizada de imagens (a documentada é a API). As regras sobre robôs de extração, cache e modificação de imagens podem aplicar-se. Para desligar e usar só o recorte do canal, define `AMAZON_IMAGES=0`. O pedido identifica-se como robô no `User-Agent`.
 
 ## Preços nos cartões (monitor)
-- Por defeito os preços são **opcionais**: se o monitor lê os dois (antigo e atual) da imagem ou do texto, o cartão leva preço riscado, desconto e preço atual. Se não, a oferta sai na mesma, com imagem, nome e logótipo.
-- `REQUIRE_PRICES=1`: descarta as ofertas sem os dois preços (comportamento antigo).
-- `SHOW_PRICES=0`: nunca lê nem mostra preços (corta a leitura por OCR). Recomendado se quiseres evitar o risco das regras de preços do Acordo de Associados (os preços só devem vir da API ou de links da Amazon).
+- Por defeito os preços são **obrigatórios**: o monitor só publica quando lê os dois (antigo e atual), da imagem (OCR) ou do texto, e o cartão leva preço riscado, desconto e preço atual. As ofertas sem os dois preços ficam em "Ofertas Descartadas" no painel, com a foto de origem, para diagnosticar o OCR.
+- `REQUIRE_PRICES=0`: publica também sem preços (cartão só com imagem, nome e logótipo).
+- `SHOW_PRICES=0`: nunca lê nem mostra preços. Recomendado se quiseres evitar o risco das regras de preços do Acordo de Associados (os preços só devem vir da API ou de links da Amazon).
