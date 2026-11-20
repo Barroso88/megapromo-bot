@@ -16,6 +16,9 @@ COPY src ./src
 
 ENV PYTHONPATH=/app/src
 ENV TELEGRAM_SESSION_PATH=/app/data/dealbot.session
+ENV WEB_PORT=8080
+
+EXPOSE 8080
 
 # Volume para persistir o estado e o ficheiro da sessão no Unraid
 VOLUME ["/app/data"]

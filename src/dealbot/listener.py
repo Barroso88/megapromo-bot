@@ -13,6 +13,7 @@ from .compose import short_title
 from .config import ListenerConfig
 from .links import LinkError, build_affiliate_link, extract_asin
 from .state import State
+from .web import save_deal_to_history, start_web_server
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("dealbot.listener")
@@ -152,6 +153,16 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
         state.mark_published(detected_asin)
         state.trim()
         state.save(state_file)
+
+        # Guarda no histórico da WebUI
+        save_deal_to_history(
+            data_dir=state_file.parent,
+            asin=detected_asin,
+            title=title,
+            source=source_display,
+            affiliate_link=affiliate_link,
+            card_bytes=card_bytes,
+        )
     except Exception as e:
         logger.error("❌ Erro ao publicar mensagem no canal de destino: %s", e)
 
@@ -160,6 +171,15 @@ async def start_listener(cfg: ListenerConfig):
     state_file = Path(cfg.session_path).parent / "state.json"
     state = State.load(state_file)
     logger.info("Estado carregado: %d produtos já publicados.", len(state.published))
+
+    # Inicia o Dashboard Web na porta configurada (padrão: 8080)
+    web_port = int(Path().cwd().joinpath("").parent and "8080")
+    try:
+        import os
+        port = int(os.environ.get("WEB_PORT", "8080"))
+        start_web_server(data_dir=state_file.parent, port=port)
+    except Exception as e:
+        logger.warning("Não foi possível iniciar o servidor WebUI: %s", e)
 
     session_path = Path(cfg.session_path)
     session_path.parent.mkdir(parents=True, exist_ok=True)
