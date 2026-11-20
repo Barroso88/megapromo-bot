@@ -64,7 +64,7 @@ def test_process_incoming_message_publishes_new_deal(tmp_path):
         state.save(state_file)
 
         msg = SimpleNamespace(
-            text="Aspirador sem fios Xiaomi em desconto!\nPreço: 89€\nhttps://www.amazon.es/dp/B0DWDH32M8",
+            text="Aspirador sem fios Xiaomi em desconto!\n❌ Antes: 129€\n✅ Agora: 89€\nhttps://www.amazon.es/dp/B0DWDH32M8",
             message=None,
             photo=None,
             media=None,
@@ -153,3 +153,46 @@ def test_card_receives_only_the_product_photo_while_prices_come_from_the_origina
     assert (seen["old"], seen["price"]) == ("25,40€", "17,77€")          # preços lidos da imagem original
     cropped = Image.open(io.BytesIO(seen["photo"]))
     assert cropped.height < Image.open(io.BytesIO(original)).height - 60   # faixa de preço removida da foto do cartão
+
+
+def _discard_case(tmp_path, text, photo_bytes=None, audit="@auditoria"):
+    async def _test():
+        client = MagicMock()
+        client.send_file, client.send_message = AsyncMock(), AsyncMock()
+        cfg = ListenerConfig(api_id=1, api_hash="h", amazon_tag="t-21", source_channels=["@f"],
+                             target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat=audit)
+        state, sf = State(published=[]), tmp_path / "state.json"
+        state.save(sf)
+        msg = SimpleNamespace(text=text, message=None, photo=object() if photo_bytes else None,
+                              media=object() if photo_bytes else None, reply_markup=None,
+                              download_media=AsyncMock(return_value=photo_bytes))
+        await process_incoming_message(client, msg, cfg, state, sf)
+        return client, state
+
+    return asyncio.run(_test())
+
+
+def test_post_without_prices_is_not_published_but_reported_in_audit(tmp_path):
+    client, state = _discard_case(tmp_path, "Gafas Hawkers polarizadas\nhttps://www.amazon.es/dp/B09NYDLHYZ")
+    published_to_channel = [c for c in client.send_message.call_args_list + client.send_file.call_args_list
+                            if c.args and c.args[0] == "@meucanal"]
+    assert published_to_channel == []
+    assert "B09NYDLHYZ" not in state.published
+    assert client.send_message.call_args.args[0] == "@auditoria"
+    assert "preços" in client.send_message.call_args.args[1].lower()
+
+
+def test_post_with_a_single_price_is_not_published(tmp_path):
+    client, state = _discard_case(tmp_path, "Gafas Hawkers 25,40€\nhttps://www.amazon.es/dp/B09NYDLHYZ")
+    assert not any(c.args and c.args[0] == "@meucanal" for c in client.send_message.call_args_list)
+    assert client.send_file.call_count == 0 and "B09NYDLHYZ" not in state.published
+
+
+def test_photo_with_unreadable_prices_is_not_published(tmp_path):
+    import io
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (300, 200), (200, 30, 30)).save(buf, "JPEG")
+    client, state = _discard_case(tmp_path, "Gafas\nhttps://www.amazon.es/dp/B09NYDLHYZ", buf.getvalue())
+    assert not any(c.args and c.args[0] == "@meucanal" for c in client.send_file.call_args_list)
+    assert "B09NYDLHYZ" not in state.published

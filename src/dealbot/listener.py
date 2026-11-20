@@ -20,6 +20,26 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("dealbot.listener")
 
 
+async def _audit_discard(client, cfg: ListenerConfig, source: str, asin: str, url: str, reason: str) -> None:
+    """Regista no log (e no chat de auditoria, se houver) uma oferta que NÃO foi publicada."""
+    logger.info("🚫 Oferta %s descartada: %s", asin, reason)
+    if not cfg.audit_chat:
+        return
+    try:
+        await client.send_message(
+            cfg.audit_chat,
+            f"🚫 <b>[MEGAPROMO - DESCARTADO]</b>\n\n"
+            f"📢 <b>Origem:</b> {source}\n"
+            f"📦 <b>ASIN:</b> <code>{asin}</code>\n"
+            f"🔗 <a href=\"{url}\">Link Original</a>\n"
+            f"<i>Não publicado: {reason}.</i>",
+            parse_mode="html",
+            link_preview=False,
+        )
+    except Exception:
+        pass
+
+
 async def process_incoming_message(client: TelegramClient, message, cfg: ListenerConfig, state: State, state_file: Path):
     """Processa uma mensagem recebida de um dos canais monitorizados."""
     urls = extract_links_from_telethon_message(message)
@@ -88,30 +108,39 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
         target_handle=cfg.target_channel,
     )
 
-    # Processamento visual: tentar obter a foto e criar o cartão do canal
-    card_bytes = None
-    price_before = price_after = None
+    # Só se publica quando os DOIS preços (antes e agora) foram lidos: do texto ou da imagem (OCR).
+    photo_data = None
     if message.photo:
         try:
             photo_data = await message.download_media(file=bytes)
-            if photo_data:
-                # Extrai preços do texto OU da imagem via OCR!
-                price_before, price_after = await asyncio.to_thread(extract_prices, raw_text, photo_data)
-                logger.info("💰 Preços detetados: Antes=%s, Depois=%s", price_before, price_after)
-                # Só depois de ler os preços: corta a foto ao produto (sem faixa de preço, logótipo nem marca do canal)
-                photo_data = await asyncio.to_thread(isolate_product, photo_data)
-
-                card_bytes = make_card(
-                    photo_data,
-                    title,
-                    "",
-                    cfg.target_channel,
-                    price=price_after,
-                    old_price=price_before,
-                )
-                logger.info("🎨 Cartão visual com branding gerado com sucesso!")
         except Exception as e:
-            logger.warning("Não foi possível gerar o cartão personalizado (%s). Usando fallback.", e)
+            logger.warning("Não foi possível descarregar a foto (%s).", e)
+    price_before, price_after = await asyncio.to_thread(extract_prices, raw_text, photo_data)
+    logger.info("💰 Preços detetados: Antes=%s, Depois=%s", price_before, price_after)
+    if not (price_before and price_after):
+        await _audit_discard(client, cfg, source_display, detected_asin, original_url,
+                             "preços antes/depois não detetados")
+        return
+
+    card_bytes = None
+    if photo_data:
+        try:
+            # Só depois de ler os preços: corta a foto ao produto (sem faixa de preço, logótipo nem marca do canal)
+            photo_data = await asyncio.to_thread(isolate_product, photo_data)
+            card_bytes = make_card(
+                photo_data,
+                title,
+                "",
+                cfg.target_channel,
+                price=price_after,
+                old_price=price_before,
+            )
+            logger.info("🎨 Cartão visual com branding gerado com sucesso!")
+        except Exception as e:
+            logger.warning("Não foi possível gerar o cartão personalizado (%s).", e)
+            await _audit_discard(client, cfg, source_display, detected_asin, original_url,
+                                 "não foi possível gerar o cartão")
+            return
 
     # Publicação no teu canal
     try:

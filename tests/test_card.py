@@ -37,13 +37,6 @@ def test_card_with_prices_has_black_price_block():
     assert sum(img.getpixel((1000, 1060))) < 120     # bloco preto do preço
 
 
-def test_card_without_prices_has_black_block_with_oferta():
-    img = Image.open(io.BytesIO(make_card(photo(), "Televisor", "", "@canal")))
-    assert img.size == (1080, 1080)
-    # O bloco de preço existe sempre garantindo o formato da referência
-    assert sum(img.getpixel((1000, 1060))) < 120
-
-
 def test_discount_percent():
     from dealbot.card import discount
     assert discount("284,80", "507,25") == 44
@@ -68,3 +61,8 @@ def test_logo_is_centered_in_the_free_space_left_of_the_discount_badge():
     img = Image.open(io.BytesIO(make_card(photo(), "x", "", "@canal", price="17,77", old_price="25,40")))
     assert sum(img.getpixel((230, 947))) < 400        # logótipo (escuro) no centro do espaço livre
     assert sum(img.getpixel((40, 947))) > 600         # e já não encostado à esquerda
+
+
+def test_card_without_prices_has_no_offer_placeholder_block():
+    img = Image.open(io.BytesIO(make_card(photo(), "x", "", "@canal")))
+    assert sum(img.getpixel((1000, 1060))) > 600     # sem bloco preto (antes mostrava "OFERTA")

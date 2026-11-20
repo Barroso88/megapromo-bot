@@ -92,7 +92,7 @@ def _price_block(card: Image.Image, price: str, old_price: str | None) -> Image.
 
     d = ImageDraw.Draw(card)
     fp = _font(84)
-    pt = f"{price}€" if any(c.isdigit() for c in (price or "")) else (price or "OFERTA")
+    pt = f"{price}€"
     d.text((S - 45 - d.textlength(pt, font=fp), y0 + (h - 84) // 2 - 6), pt, font=fp, fill=WHITE)
     if old_price:
         fo = _font(58)
@@ -134,7 +134,8 @@ def make_card(photo: bytes, title: str, category: str, handle: str,
         logo = Image.open(LOGO).convert("RGBA").resize((200, 200), Image.LANCZOS)
         card.paste(logo, ((free_right - 200) // 2, 947 - 100), logo)
 
-    card = _price_block(card, price or "OFERTA", old_price)
+    if price:
+        card = _price_block(card, price, old_price)
 
     out = io.BytesIO()
     card.save(out, "JPEG", quality=90)
