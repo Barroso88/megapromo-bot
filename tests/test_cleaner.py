@@ -38,10 +38,9 @@ def test_compose_repost_caption():
     caption = compose_repost_caption(
         title="Auriculares Beats Studio Pro",
         clean_body="Preço mínimo histórico: 199€",
-        affiliate_link="https://www.amazon.es/dp/B0DWDH32M8?tag=meu-21",
-        target_handle="@promospt"
+        affiliate_link="https://www.amazon.es/dp/B0DWDH32M8?tag=megapromopt-21",
+        target_handle="@megapromo_pt"
     )
-    assert "Auriculares Beats Studio Pro" in caption
-    assert "https://www.amazon.es/dp/B0DWDH32M8?tag=meu-21" in caption
-    assert "@promospt" in caption
+    assert "🔥 <b>Auriculares Beats Studio Pro</b>" in caption
+    assert "💥 Link: https://www.amazon.es/dp/B0DWDH32M8?tag=megapromopt-21" in caption
     assert "Como Associado da Amazon" in caption

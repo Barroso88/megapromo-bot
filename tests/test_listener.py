@@ -78,8 +78,8 @@ def test_process_incoming_message_publishes_new_deal(tmp_path):
         args, kwargs = client.send_message.call_args
         assert args[0] == "@meucanal"
         caption = args[1]
-        assert "https://www.amazon.es/dp/B0DWDH32M8?tag=minhatag-21" in caption
-        assert "@meucanal" in caption
+        assert "🔥 <b>Aspirador sem fios Xiaomi em desconto!</b>" in caption
+        assert "💥 Link: https://www.amazon.es/dp/B0DWDH32M8?tag=minhatag-21" in caption
         assert "B0DWDH32M8" in state.published
 
     asyncio.run(_test())

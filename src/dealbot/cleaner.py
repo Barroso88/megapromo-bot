@@ -55,25 +55,16 @@ def clean_text_for_repost(raw_text: str, target_handle: str) -> str:
 
 def compose_repost_caption(title: str, clean_body: str, affiliate_link: str, target_handle: str) -> str:
     """
-    Formata o post com a identidade visual e dados do teu canal.
+    Formata o post com a descrição limpa definida pelo utilizador:
+    - 🔥 Nome do produto
+    - 💥 Link: (o meu link)
+    - Aviso de afiliado da Amazon
     """
     parts = []
-    header_title = short_title(title, 140) if title else ""
-    if header_title:
-        parts.append(f"🔥 <b>{escape(header_title)}</b>")
+    header_title = short_title(title, 160) if title else "Oferta Amazon"
+    parts.append(f"🔥 <b>{escape(header_title)}</b>")
 
-    # Se o texto original limpo tiver detalhes (ex: especificações ou cupões) que não sejam apenas o título
-    if clean_body:
-        # Se o clean_body não for idêntico ao título
-        body_lines = [l for l in clean_body.splitlines() if l.strip() and l.strip() != header_title][:6]
-        if body_lines:
-            parts.append(escape("\n".join(body_lines)))
-
-    parts.append(f'👉 <a href="{escape(affiliate_link, quote=True)}"><b>VER OFERTA NA AMAZON</b></a>')
-    
-    if target_handle:
-        handle = target_handle if target_handle.startswith("@") else f"@{target_handle}"
-        parts.append(f"📢 Segue <b>{escape(handle)}</b> para não perderes promoções!")
+    parts.append(f"💥 Link: {escape(affiliate_link, quote=True)}")
 
     parts.append(f"<i>{DISCLOSURE}</i>")
     return "\n\n".join(parts)
