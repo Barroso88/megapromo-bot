@@ -8,7 +8,8 @@ from .links import find_url, extract_asin, build_affiliate_link
 # Regex para limpar arrobas de canais concorrentes e links t.me
 USERNAME_RE = re.compile(r"@([a-zA-Z0-9_]{4,32})")
 TELEGRAM_LINK_RE = re.compile(r"https?://(?:t|telegram)\.me/[a-zA-Z0-9_+/]+")
-HTTP_LINK_RE = re.compile(r"https?://\S+")
+HTTP_LINK_RE = re.compile(r"https?://[^\s<>\[\]()]+")      # pára em ] e ) do markdown [texto](url)
+URL_TRAILING = ".,;:!?'\"*_~»"
 MARKDOWN_RE = re.compile(r"\*\*|__|``?|~~")
 
 CLICKBAIT_RE = re.compile(
@@ -93,20 +94,27 @@ def extract_product_title(raw_text: str, resolved_url: str | None = None) -> str
 
 
 def extract_links_from_telethon_message(message) -> list[str]:
-    """Extrai URLs do texto, caption e botões inline da mensagem do Telethon."""
-    urls = []
+    """URLs do texto (incl. markdown [texto](url)), das entidades de hiperligação e dos botões, sem repetidos."""
+    urls: list[str] = []
+
+    def add(url):
+        if isinstance(url, str):
+            url = url.strip().rstrip(URL_TRAILING)
+            if url.startswith(("http://", "https://")) and url not in urls:
+                urls.append(url)
+
     text = (message.text or "") + "\n" + (getattr(message, "message", "") or "")
     for match in HTTP_LINK_RE.finditer(text):
-        urls.append(match.group(0))
+        add(match.group(0))
 
-    # Verifica botões inline (reply_markup)
+    for entity in getattr(message, "entities", None) or []:     # hiperligações escondidas atrás de texto
+        add(getattr(entity, "url", None))
+
     reply_markup = getattr(message, "reply_markup", None)
     if reply_markup and hasattr(reply_markup, "rows"):
         for row in reply_markup.rows:
             for btn in getattr(row, "buttons", []):
-                url = getattr(btn, "url", None)
-                if url:
-                    urls.append(url)
+                add(getattr(btn, "url", None))
     return urls
 
 

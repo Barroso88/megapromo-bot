@@ -119,3 +119,41 @@ def test_title_from_url_without_a_slug_is_none():
                 "https://www.amazon.es/dp/B0B5VPLXRB/?tag=x", "https://www.amazon.es/s/dp/B0B5VPLXRB",
                 "https://www.amazon.es/ab/dp/B0B5VPLXRB", "", None, "https://example.com/Nome-Produto/dp/B0B5VPLXRB"):
         assert title_from_url(url) is None, url
+
+
+def test_asin_in_a_redirector_path_is_recognized():
+    from dealbot.links import analyze_link
+    url = "https://descontosainanas.com/amz/B0F4QXRPT1"
+    assert analyze_link(url) == ("B0F4QXRPT1", url)
+    assert analyze_link("https://outro.pt/amazon/B0GC565CTD?x=1")[0] == "B0GC565CTD"
+    assert analyze_link("https://outro.pt/amz/curto") == (None, None)
+    assert analyze_link("https://outro.pt/categoria/B0GC565CTD") == (None, None)      # sem /amz/ ou /amazon/
+
+
+def test_more_amazon_es_formats_are_recognized():
+    from dealbot.links import extract_asin
+    for url in ("https://m.amazon.es/dp/B0B5VPLXRB", "https://www.amazon.es/gp/aw/d/B0B5VPLXRB",
+                "https://www.amazon.es/gp/offer-listing/B0B5VPLXRB/ref=x", "https://amazon.es/product/B0B5VPLXRB",
+                "https://smile.amazon.es/dp/B0B5VPLXRB"):
+        assert extract_asin(url) == "B0B5VPLXRB", url
+
+
+def test_follow_falls_back_to_get_when_head_is_refused(monkeypatch):
+    import io
+    import urllib.error
+    import urllib.request
+    from dealbot import links
+
+    calls = []
+
+    class FakeOpener:
+        def open(self, req, timeout=0):
+            calls.append(req.get_method())
+            if req.get_method() == "HEAD":
+                raise urllib.error.HTTPError(req.full_url, 405, "no", {}, io.BytesIO(b""))
+            raise urllib.error.HTTPError(req.full_url, 302, "found",
+                                         {"Location": "https://www.amazon.es/dp/B0B5VPLXRB"}, io.BytesIO(b""))
+
+    monkeypatch.setattr(urllib.request, "build_opener", lambda *a, **k: FakeOpener())
+    assert links._follow("https://amzn.to/x") == "https://www.amazon.es/dp/B0B5VPLXRB"
+    assert calls == ["HEAD", "GET"]

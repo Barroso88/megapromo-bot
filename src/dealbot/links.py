@@ -6,10 +6,12 @@ from typing import Callable
 from urllib.parse import unquote, urljoin, urlparse
 
 ASIN_RE = re.compile(r"^[A-Z0-9]{10}$")
-PATH_ASIN_RE = re.compile(r"/(?:dp|gp/product)/([A-Z0-9]{10})(?:[/?]|$)")
+PATH_ASIN_RE = re.compile(r"/(?:dp|gp/product|gp/aw/d|gp/offer-listing|product)/([A-Z0-9]{10})(?:[/?#]|$)")
+# Redirectors de canais de ofertas, ex: descontosainanas.com/amz/B0F4QXRPT1 (o ASIN vem no caminho)
+REDIRECTOR_RE = re.compile(r"/(?:amz|amazon)/([A-Z0-9]{10})(?:[/?#]|$)")
 URL_RE = re.compile(r"https?://[^\s<>]+")
 PUNCT = ".,;:!?)]}'\"»"
-AMAZON_HOSTS = {"amazon.es", "www.amazon.es"}
+AMAZON_HOSTS = {"amazon.es", "www.amazon.es", "m.amazon.es", "smile.amazon.es"}
 SHORT_HOSTS = {"amzn.to", "www.amzn.to", "a.co", "amzn.eu", "bit.ly", "tinyurl.com", "cutt.ly", "t.co"}
 
 
@@ -28,21 +30,38 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 def _follow(url: str, max_hops: int = 5) -> str:
-    """Resolve links curtos lendo o cabeçalho Location, sem abrir a página final."""
+    """Resolve links curtos lendo o cabeçalho Location, sem abrir a página final.
+
+    Usa HEAD; se o encurtador recusar (400/403/405/501), repete com GET sem seguir o redirecionamento.
+    """
     opener = urllib.request.build_opener(_NoRedirect)
-    for _ in range(max_hops):
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}, method="HEAD")
+    method = "HEAD"
+    for _ in range(max_hops + 2):
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}, method=method)
         try:
             with opener.open(req, timeout=10) as resp:
                 return resp.geturl()
         except urllib.error.HTTPError as e:
             location = e.headers.get("Location")
-            if e.code not in (301, 302, 303, 307, 308) or not location:
-                raise
-            url = urljoin(url, location)
-            if (urlparse(url).hostname or "").lower() not in SHORT_HOSTS:
-                return url
+            if e.code in (301, 302, 303, 307, 308) and location:
+                url = urljoin(url, location)
+                method = "HEAD"
+                if (urlparse(url).hostname or "").lower() not in SHORT_HOSTS:
+                    return url
+                continue
+            if method == "HEAD" and e.code in (400, 403, 405, 501):
+                method = "GET"
+                continue
+            raise
     raise OSError("demasiados redirecionamentos")
+
+
+def _asin_from_redirector(url: str) -> str | None:
+    parsed = urlparse(url)
+    if (parsed.hostname or "").lower() in AMAZON_HOSTS:
+        return None
+    m = REDIRECTOR_RE.search(parsed.path)
+    return m.group(1) if m else None
 
 
 def _asin_from_amazon_es(url: str) -> str | None:
@@ -62,7 +81,7 @@ def analyze_link(url: str, resolve: Callable[[str], str] | None = None) -> tuple
             final = (resolve or _follow)(url)
         except Exception as e:  # rede, timeout, HTTP
             raise LinkError(f"não consegui abrir o link curto: {e}") from e
-    asin = _asin_from_amazon_es(final)
+    asin = _asin_from_amazon_es(final) or _asin_from_redirector(final)
     return (asin, final) if asin else (None, None)
 
 

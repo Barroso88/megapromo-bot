@@ -3,6 +3,7 @@ import asyncio
 import io
 import logging
 from pathlib import Path
+from urllib.parse import urlparse
 
 from telethon import TelegramClient, events
 
@@ -46,6 +47,29 @@ async def _audit_discard(client, cfg: ListenerConfig, source: str, asin: str, ur
         pass
 
 
+def _first_line(text: str, limit: int = 120) -> str:
+    for line in (text or "").splitlines():
+        if line.strip():
+            return line.strip()[:limit]
+    return ""
+
+
+def _record_drop(state_file: Path, source: str, text: str, url: str, reason: str) -> None:
+    """Regista no painel uma mensagem que chegou mas não deu em oferta (antes perdia-se em silêncio)."""
+    logger.info("🚫 Mensagem de %s ignorada: %s", source, reason)
+    save_discard_to_history(state_file.parent, "", _first_line(text), source, url or "", reason)
+
+
+async def handle_message_safely(client, message, cfg: ListenerConfig, state: State, state_file: Path) -> None:
+    """Processa uma mensagem; qualquer erro fica registado no painel em vez de se perder nos logs."""
+    try:
+        await process_incoming_message(client, message, cfg, state, state_file)
+    except Exception as e:
+        logger.error("Erro inesperado no handler de mensagens: %s", e)
+        text = getattr(message, "raw_text", None) or getattr(message, "text", "") or ""
+        _record_drop(state_file, "?", text, "", f"erro inesperado: {type(e).__name__}: {e}")
+
+
 async def process_incoming_message(client: TelegramClient, message, cfg: ListenerConfig, state: State, state_file: Path):
     """Processa uma mensagem recebida de um dos canais monitorizados."""
     urls = extract_links_from_telethon_message(message)
@@ -64,10 +88,11 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
     except Exception:
         pass
 
-    # Procura um link da Amazon válido
+    # Procura um link da Amazon válido (direto, curto ou de um redirector com o ASIN no caminho)
     detected_asin = None
     original_url = None
     resolved_url = None
+    failures = []
     for url in urls:
         try:
             asin, final_url = analyze_link(url)
@@ -78,9 +103,17 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
                 break
         except (LinkError, Exception) as e:
             logger.debug("Falha ao analisar url %s: %s", url, e)
+            failures.append((url, e))
             continue
 
     if not detected_asin:
+        hosts = ", ".join(dict.fromkeys((urlparse(u).hostname or "?") for u in urls))
+        if failures:
+            bad_url, err = failures[0]
+            reason = f"link curto não abriu ({urlparse(bad_url).hostname}): {err}"
+        else:
+            reason = f"sem link da Amazon.es reconhecido (links: {hosts})"
+        _record_drop(state_file, source_display, raw_text, urls[0], reason)
         return
 
     # Deduplicação: se já publicámos este produto, ignora
@@ -265,7 +298,7 @@ async def start_listener(cfg: ListenerConfig):
         @client.on(events.NewMessage(chats=valid_chats))
         async def handler(event):
             try:
-                await process_incoming_message(client, event.message, cfg, state, state_file)
+                await handle_message_safely(client, event.message, cfg, state, state_file)
             except Exception as e:
                 logger.error("Erro inesperado no handler de mensagens: %s", e)
 

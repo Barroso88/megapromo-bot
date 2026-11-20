@@ -105,3 +105,22 @@ def test_names_with_numbers_are_kept():
     for name in ("Philips Lumea 8000 depilador IPL BRI949/00", "Fenger Recipientes de vidro com tampa (10 unidades)",
                  "Lego Technic 42176 Porsche 911 GT3 RS", "Samsung Galaxy S24 Ultra 256GB 12GB RAM"):
         assert extract_product_title(f"{name}\nhttps://x") == name
+
+
+def test_links_in_markdown_are_clean_and_deduplicated():
+    from types import SimpleNamespace
+    from dealbot.cleaner import extract_links_from_telethon_message
+    msg = SimpleNamespace(
+        text="👉 [https://descontosainanas.com/amz/B0F4QXRPT1](https://descontosainanas.com/amz/B0F4QXRPT1)\n"
+             "🏷 [#Calçado Mulher](https://boacena.pt/category/calcado-mulher) · Pub **https://amzn.to/abc**",
+        message=None, reply_markup=None, entities=None)
+    assert extract_links_from_telethon_message(msg) == [
+        "https://descontosainanas.com/amz/B0F4QXRPT1", "https://boacena.pt/category/calcado-mulher", "https://amzn.to/abc"]
+
+
+def test_hidden_hyperlink_urls_from_entities_are_included():
+    from types import SimpleNamespace
+    from dealbot.cleaner import extract_links_from_telethon_message
+    ent = SimpleNamespace(url="https://amzn.to/hidden1")
+    msg = SimpleNamespace(text="🛒 Comprar aqui", message="🛒 Comprar aqui", reply_markup=None, entities=[ent, object()])
+    assert extract_links_from_telethon_message(msg) == ["https://amzn.to/hidden1"]

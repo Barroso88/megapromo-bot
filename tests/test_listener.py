@@ -326,3 +326,59 @@ def test_link_without_slug_falls_back_to_the_text_name(tmp_path, monkeypatch):
         tmp_path, monkeypatch, "Cecotec Freidora Cecofry 5L\n❌ Antes: 90€\n✅ Agora: 60€\nhttps://amzn.to/3xyz", final)
     caption = [c.args[1] for c in client.send_message.call_args_list if c.args[0] == "@meucanal"][0]
     assert "Cecotec Freidora Cecofry 5L" in caption
+
+
+DESCONTOS_POST = (
+    "🔥 Sapatilhas Fila Hypert para mulher\n\n"
+    "👉 [https://descontosainanas.com/amz/B0F4QXRPT1](https://descontosainanas.com/amz/B0F4QXRPT1)\n"
+    "❌ Antes: 43,15€\n✅ Agora: 29,94€\n[ 31% desconto ]\n"
+    "🏷 [#Calçado Mulher](https://boacena.pt/category/moda/mulher/calcado-mulher) · Pub")
+
+
+def test_descontosainanas_style_post_is_published(tmp_path, monkeypatch):
+    client, state = _link_case(tmp_path, monkeypatch, DESCONTOS_POST)
+    posted = [c.args[1] for c in client.send_message.call_args_list if c.args[0] == "@meucanal"]
+    assert posted and "Sapatilhas Fila Hypert para mulher" in posted[0]
+    assert "https://www.amazon.es/dp/B0F4QXRPT1?tag=t-21" in posted[0] and "descontosainanas" not in posted[0]
+    assert "B0F4QXRPT1" in state.published
+
+
+def test_post_with_links_but_no_amazon_link_is_recorded_as_discarded(tmp_path, monkeypatch):
+    import json
+    _link_case(tmp_path, monkeypatch, "Fone Bluetooth super oferta\nhttps://www.aliexpress.com/item/123.html\nhttps://t.me/x")
+    items = json.loads((tmp_path / "discarded.json").read_text())
+    assert "aliexpress.com" in items[0]["reason"] and items[0]["title"].startswith("Fone Bluetooth")
+
+
+def test_short_link_that_cannot_be_opened_is_recorded_as_discarded(tmp_path, monkeypatch):
+    import json
+    import dealbot.links as links
+
+    def boom(url, max_hops=5):
+        raise OSError("timeout")
+
+    monkeypatch.setattr(links, "_follow", boom)
+    _link_case(tmp_path, monkeypatch, "Nome do Produto Bom\n❌ Antes: 90€ ✅ Agora: 60€\nhttps://amzn.to/abc")
+    items = json.loads((tmp_path / "discarded.json").read_text())
+    assert "link curto" in items[0]["reason"] and "amzn.to" in items[0]["reason"]
+
+
+def test_unexpected_errors_are_recorded_not_lost(tmp_path, monkeypatch):
+    import json
+    import dealbot.listener as listener
+
+    async def boom(*a, **k):
+        raise RuntimeError("falhou o OCR")
+
+    monkeypatch.setattr(listener.asyncio, "to_thread", boom)
+    client = MagicMock()
+    client.send_file, client.send_message = AsyncMock(), AsyncMock()
+    cfg = ListenerConfig(api_id=1, api_hash="h", amazon_tag="t-21", source_channels=["@f"],
+                         target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat="")
+    state, sf = State(published=[]), tmp_path / "state.json"
+    state.save(sf)
+    msg = SimpleNamespace(text="Produto Bom Nome\n❌ Antes: 90€ ✅ Agora: 60€\nhttps://www.amazon.es/dp/B0B5VPLXRB",
+                          message=None, photo=None, media=None, reply_markup=None)
+    asyncio.run(listener.handle_message_safely(client, msg, cfg, state, sf))
+    items = json.loads((tmp_path / "discarded.json").read_text())
+    assert "erro inesperado" in items[0]["reason"] and "falhou o OCR" in items[0]["reason"]
