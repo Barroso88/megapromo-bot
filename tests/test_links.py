@@ -157,3 +157,45 @@ def test_follow_falls_back_to_get_when_head_is_refused(monkeypatch):
     monkeypatch.setattr(urllib.request, "build_opener", lambda *a, **k: FakeOpener())
     assert links._follow("https://amzn.to/x") == "https://www.amazon.es/dp/B0B5VPLXRB"
     assert calls == ["HEAD", "GET"]
+
+
+def _chain_opener(table, calls):
+    """Opener falso: table[(método, url)] -> ('redirect', location) | ('http', código)."""
+    import io
+    import urllib.error
+
+    class FakeOpener:
+        def open(self, req, timeout=0):
+            calls.append((req.get_method(), req.full_url))
+            kind, value = table[(req.get_method(), req.full_url)]
+            if kind == "redirect":
+                raise urllib.error.HTTPError(req.full_url, 302, "found", {"Location": value}, io.BytesIO(b""))
+            raise urllib.error.HTTPError(req.full_url, value, "erro", {}, io.BytesIO(b""))
+
+    return FakeOpener()
+
+
+def test_link_amazon_short_links_are_followed_through_amzlinks_to_the_asin(monkeypatch):
+    import urllib.request
+    from dealbot import links
+    final = "https://www.amazon.es/dp/B0HLLRL9NH?linkCode=sl2&tag=bilbia-21&ref_=as_li_ss_tl"
+    calls = []
+    table = {
+        ("HEAD", "https://link.amazon/B09v989BG"): ("http", 404),               # HEAD não suportado
+        ("GET", "https://link.amazon/B09v989BG"): ("redirect", "https://amzlinks.in/B09v989BG"),
+        ("HEAD", "https://amzlinks.in/B09v989BG"): ("redirect", final),
+    }
+    monkeypatch.setattr(urllib.request, "build_opener", lambda *a, **k: _chain_opener(table, calls))
+    assert links.analyze_link("https://link.amazon/B09v989BG") == ("B0HLLRL9NH", final)
+    assert calls == [("HEAD", "https://link.amazon/B09v989BG"), ("GET", "https://link.amazon/B09v989BG"),
+                     ("HEAD", "https://amzlinks.in/B09v989BG")]
+
+
+def test_an_unknown_host_in_the_chain_is_never_requested(monkeypatch):
+    import urllib.request
+    from dealbot import links
+    calls = []
+    table = {("HEAD", "https://link.amazon/xyz"): ("redirect", "https://evil.example.com/x")}
+    monkeypatch.setattr(urllib.request, "build_opener", lambda *a, **k: _chain_opener(table, calls))
+    assert links.analyze_link("https://link.amazon/xyz") == (None, None)
+    assert calls == [("HEAD", "https://link.amazon/xyz")]                      # parou: não pediu evil.example.com

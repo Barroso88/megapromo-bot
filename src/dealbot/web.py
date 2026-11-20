@@ -169,6 +169,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         <p class="text-white font-semibold truncate" title="${esc(it.title)}">${esc(it.title) || '(sem título)'}</p>
                         <p class="text-xs text-gray-500 font-mono mt-0.5">${esc(it.asin)} · ${esc(it.source)} · ${esc(t)}</p>
                         <p class="text-xs text-red-300 mt-1">Motivo: ${esc(it.reason)} <span class="text-gray-500">(${prices})</span></p>
+                        ${it.excerpt ? `<p class="text-xs text-gray-500 mt-1 whitespace-pre-line break-words">${esc(it.excerpt).slice(0, 300)}</p>` : ''}
                     </div>
                     <a href="${safeUrl(it.original_url)}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-orange-400 hover:text-orange-300 whitespace-nowrap">Ver original ➔</a>
                 </div>`;
@@ -274,7 +275,7 @@ def save_deal_to_history(data_dir: Path, asin: str, title: str, source: str,
 
 
 def save_discard_to_history(data_dir: Path, asin: str, title: str, source: str, original_url: str, reason: str,
-                            price_before: str | None = None, price_after: str | None = None):
+                            price_before: str | None = None, price_after: str | None = None, excerpt: str = ""):
     """Guarda uma oferta NÃO publicada (e o motivo) para aparecer no dashboard."""
     try:
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -287,7 +288,7 @@ def save_discard_to_history(data_dir: Path, asin: str, title: str, source: str, 
                 items = []
         items.insert(0, {
             "asin": asin, "title": title, "source": source, "original_url": original_url, "reason": reason,
-            "price_before": price_before, "price_after": price_after,
+            "price_before": price_before, "price_after": price_after, "excerpt": (excerpt or "")[:400],
             "timestamp": datetime.now().isoformat(),
         })
         file.write_text(json.dumps(items[:200], ensure_ascii=False, indent=2), encoding="utf-8")

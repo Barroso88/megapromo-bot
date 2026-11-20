@@ -382,3 +382,12 @@ def test_unexpected_errors_are_recorded_not_lost(tmp_path, monkeypatch):
     asyncio.run(listener.handle_message_safely(client, msg, cfg, state, sf))
     items = json.loads((tmp_path / "discarded.json").read_text())
     assert "erro inesperado" in items[0]["reason"] and "falhou o OCR" in items[0]["reason"]
+
+
+def test_price_failure_record_keeps_a_text_excerpt_to_diagnose_the_format(tmp_path, monkeypatch):
+    import json
+    _link_case(tmp_path, monkeypatch,
+               "🔥 BOM preço! Mínimo histórico!\nRockJam ▫️ Bluetooth Máquina karaoke 2 microfones\n"
+               "💰 29,99€\nhttps://www.amazon.es/dp/B0BXT76Z42")
+    item = json.loads((tmp_path / "discarded.json").read_text())[0]
+    assert "preços" in item["reason"] and "29,99€" in item["excerpt"] and "RockJam" in item["excerpt"]

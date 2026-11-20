@@ -76,3 +76,11 @@ def test_dashboard_escapes_third_party_text_and_lists_discards():
     assert "function esc(" in HTML_TEMPLATE
     assert "${deal.title}" not in HTML_TEMPLATE and "${deal.source" not in HTML_TEMPLATE
     assert "/api/discarded" in HTML_TEMPLATE and "descartad" in HTML_TEMPLATE.lower()
+
+
+def test_discard_excerpt_is_saved_and_served(server):
+    tmp, port = server
+    save_discard_to_history(tmp, asin="B0TEST12345", title="t", source="s", original_url="u", reason="r",
+                            excerpt="Texto do post <b>com html</b>")
+    assert json.loads(get(port, "/api/discarded")[1])[0]["excerpt"] == "Texto do post <b>com html</b>"
+    assert "excerpt" in HTML_TEMPLATE and "esc(it.excerpt" in HTML_TEMPLATE

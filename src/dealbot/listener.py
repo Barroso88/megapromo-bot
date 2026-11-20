@@ -25,11 +25,11 @@ logger = logging.getLogger("dealbot.listener")
 
 async def _audit_discard(client, cfg: ListenerConfig, source: str, asin: str, url: str, reason: str,
                          data_dir: Path | None = None, title: str = "",
-                         price_before: str | None = None, price_after: str | None = None) -> None:
+                         price_before: str | None = None, price_after: str | None = None, excerpt: str = "") -> None:
     """Regista no log, no dashboard e no chat de auditoria (se houver) uma oferta que NÃO foi publicada."""
     logger.info("🚫 Oferta %s descartada: %s", asin, reason)
     if data_dir is not None:
-        save_discard_to_history(data_dir, asin, title, source, url, reason, price_before, price_after)
+        save_discard_to_history(data_dir, asin, title, source, url, reason, price_before, price_after, excerpt)
     if not cfg.audit_chat:
         return
     try:
@@ -57,7 +57,7 @@ def _first_line(text: str, limit: int = 120) -> str:
 def _record_drop(state_file: Path, source: str, text: str, url: str, reason: str) -> None:
     """Regista no painel uma mensagem que chegou mas não deu em oferta (antes perdia-se em silêncio)."""
     logger.info("🚫 Mensagem de %s ignorada: %s", source, reason)
-    save_discard_to_history(state_file.parent, "", _first_line(text), source, url or "", reason)
+    save_discard_to_history(state_file.parent, "", _first_line(text), source, url or "", reason, excerpt=text)
 
 
 async def handle_message_safely(client, message, cfg: ListenerConfig, state: State, state_file: Path) -> None:
@@ -172,7 +172,7 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
         await _audit_discard(client, cfg, source_display, detected_asin, original_url,
                              "preços antes/depois não detetados",
                              data_dir=state_file.parent, title=title,
-                             price_before=price_before, price_after=price_after)
+                             price_before=price_before, price_after=price_after, excerpt=raw_text)
         return
 
     # Foto do produto: imagem oficial pelo ASIN; se não houver (ou estiver desligada), recorte da foto do canal.

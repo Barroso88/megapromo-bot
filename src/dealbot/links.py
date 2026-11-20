@@ -12,7 +12,8 @@ REDIRECTOR_RE = re.compile(r"/(?:amz|amazon)/([A-Z0-9]{10})(?:[/?#]|$)")
 URL_RE = re.compile(r"https?://[^\s<>]+")
 PUNCT = ".,;:!?)]}'\"»"
 AMAZON_HOSTS = {"amazon.es", "www.amazon.es", "m.amazon.es", "smile.amazon.es"}
-SHORT_HOSTS = {"amzn.to", "www.amzn.to", "a.co", "amzn.eu", "bit.ly", "tinyurl.com", "cutt.ly", "t.co"}
+SHORT_HOSTS = {"amzn.to", "www.amzn.to", "a.co", "amzn.eu", "bit.ly", "tinyurl.com", "cutt.ly", "t.co",
+               "link.amazon", "amzlinks.in"}      # link.amazon/<código> -> amzlinks.in/<código> -> amazon.es/dp/<ASIN> (SiteStripe)
 
 
 class LinkError(Exception):
@@ -32,7 +33,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 def _follow(url: str, max_hops: int = 5) -> str:
     """Resolve links curtos lendo o cabeçalho Location, sem abrir a página final.
 
-    Usa HEAD; se o encurtador recusar (400/403/405/501), repete com GET sem seguir o redirecionamento.
+    Usa HEAD; se o encurtador recusar (400/403/404/405/501), repete com GET sem seguir o redirecionamento.
     """
     opener = urllib.request.build_opener(_NoRedirect)
     method = "HEAD"
@@ -49,7 +50,7 @@ def _follow(url: str, max_hops: int = 5) -> str:
                 if (urlparse(url).hostname or "").lower() not in SHORT_HOSTS:
                     return url
                 continue
-            if method == "HEAD" and e.code in (400, 403, 405, 501):
+            if method == "HEAD" and e.code in (400, 403, 404, 405, 501):
                 method = "GET"
                 continue
             raise
