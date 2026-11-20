@@ -18,7 +18,10 @@
   "https://www.chollometro.com/ofertas/poco-f9-ultra-16512-negro-8050mah-carga-100-w-snapdragon-8-elite-gen-5-2079685",
   "https://www.chollometro.com/ofertas/caja-de-caudales-con-llave-extra-grande-300-x-90-x-240-mm-2080258",
   "https://www.chollometro.com/ofertas/pop-funko-animation-naruto-rock-lee-merchandising-oficial-2080255",
-  "https://www.chollometro.com/ofertas/la-silla-espanola-pack-de-4-sillas-de-comedor-estilo-contemporaneo-modelo-guadix-2080254"
+  "https://www.chollometro.com/ofertas/la-silla-espanola-pack-de-4-sillas-de-comedor-estilo-contemporaneo-modelo-guadix-2080254",
+  "https://www.chollometro.com/ofertas/tommy-jeans-bolso-bandolera-de-mujer-disponible-en-negro-y-azul-marino-2081239",
+  "https://www.chollometro.com/ofertas/x2-total-4-unidadesfrosch-lavavajillas-ecologico-a-mano-liquido-balsamo-limon-2x750ml-desengrasa-y-protege-la-piel-2081237",
+  "https://www.chollometro.com/ofertas/playmobil-junior-tren-de-animales-tren-colorido-con-animales-4-vagones-y-cabina-de-conductor-2081232"
  ],
  "pending": {
   "3": {
@@ -116,6 +119,24 @@
    "category": "Hogar, vivienda y oficina",
    "price": "105,83€",
    "image": "https://static.chollometro.com/threads/raw/VIW5h/2080254_1/re/150x150/qt/55/2080254_1.jpg"
+  },
+  "25": {
+   "title": "Tommy Jeans – Bolsa tiracolo para mulher disponível em preto e azul marinho",
+   "category": "Moda e acessórios",
+   "price": "36,67€",
+   "image": "https://static.chollometro.com/threads/raw/P2TQI/2081239_1/re/150x150/qt/55/2081239_1.jpg"
+  },
+  "26": {
+   "title": "X2. (Total de 4 unidades) Frosch Líquido para Máquina de Lavar Loiça Manual Ecológico Erva-Cidreira - 2x750ml Desengordura e Protege a Pele.",
+   "category": "Supermercado e alimentação",
+   "price": "9,33€",
+   "image": "https://static.chollometro.com/threads/raw/1Ps7f/2081237_1/re/150x150/qt/55/2081237_1.jpg"
+  },
+  "27": {
+   "title": "PLAYMOBIL | Júnior | Comboio Animal | Comboio colorido com animais, 4 carros e cabine do condutor",
+   "category": "Brinquedos, família e crianças",
+   "price": "16,89€",
+   "image": "https://static.chollometro.com/threads/raw/yqcVc/2081232_1/re/150x150/qt/55/2081232_1.jpg"
   }
  },
  "published": [
