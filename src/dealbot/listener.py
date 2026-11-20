@@ -101,10 +101,12 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
             photo_data = await message.download_media(file=bytes)
             if photo_data:
                 card_bytes = make_card(
-                    photo=photo_data,
-                    price_before=price_before,
-                    price_after=price_after,
-                    channel_name="MegaPromo",
+                    photo_data,
+                    title,
+                    "",
+                    cfg.target_channel,
+                    price=price_after,
+                    old_price=price_before,
                 )
                 logger.info("🎨 Cartão visual com branding gerado com sucesso!")
         except Exception as e:

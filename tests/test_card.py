@@ -47,3 +47,10 @@ def test_discount_percent():
     assert discount("284,80", "507,25") == 44
     assert discount("1.299,00", "1.499,00") == 13
     assert discount("10,00", "10,00") is None and discount("x", "y") is None
+
+
+def test_prices_with_euro_sign_are_accepted_without_doubling():
+    out = make_card(photo(), "x", "", "@canal", price="284,80€", old_price=" 507,25 € ")
+    assert Image.open(io.BytesIO(out)).size == (1080, 1080)
+    from dealbot.card import discount
+    assert discount("284,80€", "507,25€") == 44

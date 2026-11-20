@@ -24,9 +24,15 @@ def _font(size: int):
     return ImageFont.load_default(size)
 
 
+def _clean(price: str | None) -> str | None:
+    """'507,25€' / ' 507,25 € ' -> '507,25' (o símbolo € é acrescentado ao desenhar)."""
+    price = (price or "").replace("€", "").strip()
+    return price or None
+
+
 def _num(text: str) -> float | None:
     try:
-        return float(text.replace(".", "").replace(",", "."))
+        return float((_clean(text) or "").replace(".", "").replace(",", "."))
     except ValueError:
         return None
 
@@ -102,6 +108,7 @@ def _price_block(card: Image.Image, price: str, old_price: str | None) -> Image.
 
 def make_card(photo: bytes, title: str, category: str, handle: str,
               price: str | None = None, old_price: str | None = None) -> bytes:
+    price, old_price = _clean(price), _clean(old_price)
     try:
         product = Image.open(io.BytesIO(photo)).convert("RGB")
     except (UnidentifiedImageError, OSError) as e:
