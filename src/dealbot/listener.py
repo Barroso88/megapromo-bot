@@ -89,12 +89,13 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
 
     # Processamento visual: tentar obter a foto e criar o cartão do canal
     card_bytes = None
+    price_before = price_after = None
     if message.photo:
         try:
             photo_data = await message.download_media(file=bytes)
             if photo_data:
                 # Extrai preços do texto OU da imagem via OCR!
-                price_before, price_after = extract_prices(raw_text, photo_bytes=photo_data)
+                price_before, price_after = await asyncio.to_thread(extract_prices, raw_text, photo_data)
                 logger.info("💰 Preços detetados: Antes=%s, Depois=%s", price_before, price_after)
 
                 card_bytes = make_card(
@@ -130,7 +131,8 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
                     f"🎯 <b>[MEGAPROMO - NOVA PUBLICAÇÃO]</b>\n\n"
                     f"📢 <b>Origem:</b> {source_display}\n"
                     f"📦 <b>ASIN:</b> <code>{detected_asin}</code>\n"
-                    f"🔗 <b>Original:</b> <a href=\"{original_url}\">Ver link original</a>\n"
+                    + (f"💰 <b>Preços lidos (OCR):</b> antes {price_before} → agora {price_after}\n" if price_after else "")
+                    + f"🔗 <b>Original:</b> <a href=\"{original_url}\">Ver link original</a>\n"
                     f"🚀 <b>Teu Link:</b> <a href=\"{affiliate_link}\">Ver com tua tag</a>\n"
                     f"✅ <b>Publicado em:</b> {cfg.target_channel}"
                 )
