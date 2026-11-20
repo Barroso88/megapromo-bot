@@ -196,3 +196,11 @@ def test_photo_with_unreadable_prices_is_not_published(tmp_path):
     client, state = _discard_case(tmp_path, "Gafas\nhttps://www.amazon.es/dp/B09NYDLHYZ", buf.getvalue())
     assert not any(c.args and c.args[0] == "@meucanal" for c in client.send_file.call_args_list)
     assert "B09NYDLHYZ" not in state.published
+
+
+def test_discarded_offer_is_recorded_for_the_dashboard(tmp_path):
+    import json
+    _discard_case(tmp_path, "Gafas Hawkers 25,40€\nhttps://www.amazon.es/dp/B09NYDLHYZ", audit="")
+    items = json.loads((tmp_path / "discarded.json").read_text())
+    assert items[0]["asin"] == "B09NYDLHYZ" and "preços" in items[0]["reason"]
+    assert items[0]["title"].startswith("Gafas Hawkers")

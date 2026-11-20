@@ -14,15 +14,19 @@ from .compose import short_title
 from .config import ListenerConfig
 from .links import LinkError, build_affiliate_link, extract_asin
 from .state import State
-from .web import save_deal_to_history, start_web_server
+from .web import save_deal_to_history, save_discard_to_history, start_web_server
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("dealbot.listener")
 
 
-async def _audit_discard(client, cfg: ListenerConfig, source: str, asin: str, url: str, reason: str) -> None:
-    """Regista no log (e no chat de auditoria, se houver) uma oferta que NÃO foi publicada."""
+async def _audit_discard(client, cfg: ListenerConfig, source: str, asin: str, url: str, reason: str,
+                         data_dir: Path | None = None, title: str = "",
+                         price_before: str | None = None, price_after: str | None = None) -> None:
+    """Regista no log, no dashboard e no chat de auditoria (se houver) uma oferta que NÃO foi publicada."""
     logger.info("🚫 Oferta %s descartada: %s", asin, reason)
+    if data_dir is not None:
+        save_discard_to_history(data_dir, asin, title, source, url, reason, price_before, price_after)
     if not cfg.audit_chat:
         return
     try:
@@ -119,7 +123,9 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
     logger.info("💰 Preços detetados: Antes=%s, Depois=%s", price_before, price_after)
     if not (price_before and price_after):
         await _audit_discard(client, cfg, source_display, detected_asin, original_url,
-                             "preços antes/depois não detetados")
+                             "preços antes/depois não detetados",
+                             data_dir=state_file.parent, title=title,
+                             price_before=price_before, price_after=price_after)
         return
 
     card_bytes = None
@@ -139,7 +145,9 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
         except Exception as e:
             logger.warning("Não foi possível gerar o cartão personalizado (%s).", e)
             await _audit_discard(client, cfg, source_display, detected_asin, original_url,
-                                 "não foi possível gerar o cartão")
+                                 "não foi possível gerar o cartão",
+                                 data_dir=state_file.parent, title=title,
+                                 price_before=price_before, price_after=price_after)
             return
 
     # Publicação no teu canal
