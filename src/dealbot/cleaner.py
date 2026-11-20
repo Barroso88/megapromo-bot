@@ -32,8 +32,19 @@ INSTRUCTION_RE = re.compile(
 )
 
 
-LABEL_LINE_RE = re.compile(r"^(antes|agora|pvp|pre[cç]o|link|url|cup[aã]o|c[oó]digo)\b", re.IGNORECASE)
+LABEL_LINE_RE = re.compile(
+    r"^(antes|agora|pvp|pre[cç]o|link|url|cup[aã]o|c[oó]digo|tamanhos?|tallas?|sizes?|cores?|cor|colou?rs?|colores|"
+    r"dispon[ií]ve(l|is)|envio|entrega|v[aá]lid[oa]|stock|medidas?)\b",
+    re.IGNORECASE,
+)
 PRICE_RE_TITLE = re.compile(r"[\d.,]+\s*€|€\s*[\d.,]+")
+
+
+def mostly_numbers(text: str) -> bool:
+    """'38.5, 39.5, 40, 41, 42': lista de números (tamanhos, quantidades), não o nome de um produto."""
+    tokens = text.split()
+    numeric = [t for t in tokens if re.fullmatch(r"[\d.,/:;()x-]+", t)]
+    return bool(tokens) and len(numeric) / len(tokens) > 0.5
 
 
 def is_headline(text: str) -> bool:
@@ -60,7 +71,7 @@ def extract_product_title(raw_text: str, resolved_url: str | None = None) -> str
             clean = PRICE_RE_TITLE.sub("", clean).strip(" -—•*~#[]()")
             if len(re.findall(r"[^\W\d_]+", clean)) < 2:
                 continue
-        if is_headline(clean) or INSTRUCTION_RE.search(clean):
+        if mostly_numbers(clean) or is_headline(clean) or INSTRUCTION_RE.search(clean):
             continue
         # Frases de chamariz ("32%! Excelente preço! Mínimo histórico!") não são o nome do produto
         if CLICKBAIT_RE.search(clean) and len(clean.split()) <= 8:

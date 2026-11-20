@@ -89,3 +89,19 @@ def test_price_and_link_lines_are_never_the_title():
     text = "❌ Antes: 60,98€\n✅ Agora: 32,00€\n[ 28€ desconto ]\n💥 Link: https://x\nLego Friends Central Perk"
     assert extract_product_title(text) == "Lego Friends Central Perk"
     assert extract_product_title("❌ Antes: 60,98€\n✅ Agora: 32,00€\nhttps://x") == "Oferta Especial"
+
+
+def test_size_color_and_availability_lines_are_not_titles():
+    from dealbot.cleaner import extract_product_title
+    name = "Skechers Graceful Get Connected sapatilhas mulher"
+    for junk in ("Tamanhos: 38.5, 39.5, 40, 41, 42", "Tamanho 40 e 41", "Disponível em várias cores!!",
+                 "Cores: rosa, preto, azul", "Talla 38 39 40", "38.5, 39.5, 40, 41, 42"):
+        assert extract_product_title(f"{junk}\n{name}\nhttps://x") == name, junk
+        assert extract_product_title(f"{junk}\nhttps://x") == "Oferta Especial", junk
+
+
+def test_names_with_numbers_are_kept():
+    from dealbot.cleaner import extract_product_title
+    for name in ("Philips Lumea 8000 depilador IPL BRI949/00", "Fenger Recipientes de vidro com tampa (10 unidades)",
+                 "Lego Technic 42176 Porsche 911 GT3 RS", "Samsung Galaxy S24 Ultra 256GB 12GB RAM"):
+        assert extract_product_title(f"{name}\nhttps://x") == name
