@@ -8,6 +8,7 @@ from telethon import TelegramClient, events
 
 from .card import make_card
 from .cleaner import clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message, extract_product_title
+from .product_image import isolate_product
 from .price_extractor import extract_prices
 from .compose import short_title
 from .config import ListenerConfig
@@ -97,6 +98,8 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
                 # Extrai preços do texto OU da imagem via OCR!
                 price_before, price_after = await asyncio.to_thread(extract_prices, raw_text, photo_data)
                 logger.info("💰 Preços detetados: Antes=%s, Depois=%s", price_before, price_after)
+                # Só depois de ler os preços: corta a foto ao produto (sem faixa de preço, logótipo nem marca do canal)
+                photo_data = await asyncio.to_thread(isolate_product, photo_data)
 
                 card_bytes = make_card(
                     photo_data,

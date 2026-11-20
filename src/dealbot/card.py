@@ -117,7 +117,8 @@ def make_card(photo: bytes, title: str, category: str, handle: str,
     d = ImageDraw.Draw(card)
 
     box = (S - 120, BAND_TOP - HEADER_H - 10)
-    product.thumbnail(box, Image.LANCZOS)
+    scale = min(box[0] / product.width, box[1] / product.height, 3)      # ajusta à caixa; amplia fotos pequenas (até 3x)
+    product = product.resize((max(1, int(product.width * scale)), max(1, int(product.height * scale))), Image.LANCZOS)
     card.paste(product, ((S - product.width) // 2, HEADER_H + 15 + (box[1] - product.height) // 2))
 
     _band(d)

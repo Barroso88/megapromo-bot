@@ -56,3 +56,9 @@ def test_prices_with_euro_sign_are_accepted_without_doubling():
     assert Image.open(io.BytesIO(out)).size == (1080, 1080)
     from dealbot.card import discount
     assert discount("284,80€", "507,25€") == 44
+
+
+def test_small_photo_is_enlarged_to_fill_the_photo_area():
+    img = Image.open(io.BytesIO(make_card(photo(150, 100), "x", "", "@canal")))
+    assert img.getpixel((540, 360))[0] > 150       # centro da área da foto agora coberto pelo produto (vermelho)
+    assert img.getpixel((300, 360))[0] > 150       # e também mais para os lados: a foto foi ampliada
