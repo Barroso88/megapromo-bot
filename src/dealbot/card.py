@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont, UnidentifiedImageError
 
 S = 1080
 NAVY, ORANGE, WHITE = (16, 24, 48), (255, 122, 0), (255, 255, 255)
-BLUE, BLACK_L, BLACK_R, GREY_BG, GREY_TXT, RED, GOLD = (0, 112, 206), (62, 64, 70), (6, 6, 8), (244, 245, 248), (100, 112, 135), (200, 30, 60), (255, 215, 0)
+BLUE, BLACK_L, BLACK_R, GREY_BG, GREY_TXT, RED, GOLD = (0, 112, 206), (74, 76, 82), (0, 0, 0), (244, 245, 248), (100, 112, 135), (200, 30, 60), (255, 215, 0)
 HEADER_H, BAND_TOP = 100, 760
 LOGO = Path(__file__).parent / "assets" / "logo.png"
 FONTS = (
@@ -64,34 +64,35 @@ def _starburst(card, cx, cy, r, pct):
 def _price_block(card: Image.Image, price: str, old_price: str | None) -> Image.Image:
     """Bloco do preço: degradê preto, canto superior-esquerdo bem arredondado, selo de desconto com sombra."""
     card = card.convert("RGBA")
-    x0, y0, w, h = 540, S - 150, S - 540, 190
+    x0, y0 = 553, 919
+    w, h = S - x0, S - y0
     grad = Image.new("RGB", (w, h))
     gd = ImageDraw.Draw(grad)
     for x in range(w):
-        t = (x / w) ** 1.3
+        t = x / w
         gd.line((x, 0, x, h), fill=tuple(int(BLACK_L[i] + (BLACK_R[i] - BLACK_L[i]) * t) for i in range(3)))
     mask = Image.new("L", (w, h), 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, w + 60, h + 60), radius=95, fill=255)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, w + 120, h - 1), radius=88, fill=255)
     card.paste(grad, (x0, y0), mask)
 
     d = ImageDraw.Draw(card)
-    fp = _font(80)
+    fp = _font(84)
     pt = f"{price}€"
-    d.text((S - 40 - d.textlength(pt, font=fp), S - 135), pt, font=fp, fill=WHITE)
+    d.text((S - 45 - d.textlength(pt, font=fp), y0 + (h - 84) // 2 - 6), pt, font=fp, fill=WHITE)
     if old_price:
         fo = _font(46)
         ot = f"{old_price}€"
-        ox = S - 60 - d.textlength(ot, font=fo)
-        d.text((ox, S - 218), ot, font=fo, fill=GREY_TXT)
-        d.line((ox - 8, S - 194, S - 52, S - 194), fill=RED, width=5)
+        ox = S - 65 - d.textlength(ot, font=fo)
+        d.text((ox, 835), ot, font=fo, fill=GREY_TXT)
+        d.line((ox - 8, 861, S - 57, 861), fill=RED, width=5)
         pct = discount(price, old_price)
         if pct:
-            pts = _starburst(card, 470, S - 98, 70, pct)
+            pts = _starburst(card, 537, 905, 76, pct)
             d = ImageDraw.Draw(card)
             d.polygon(pts, fill=GOLD)
             f = _font(40)
             tx = f"-{pct}%"
-            d.text((470 - d.textlength(tx, font=f) / 2, S - 98 - 24), tx, font=f, fill=(190, 20, 20))
+            d.text((537 - d.textlength(tx, font=f) / 2, 905 - 24), tx, font=f, fill=(190, 20, 20))
     return card.convert("RGB")
 
 
