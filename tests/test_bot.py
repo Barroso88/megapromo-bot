@@ -228,3 +228,18 @@ def test_owner_prices_in_reply_reach_the_card():
 
     run_once(CFG, tg, st, fetch=lambda: "", now=DAY, parse=lambda _x: [], fetch_image=lambda u: b"I", make_card=mk)
     assert got == {"price": "284,80", "old": "507,25"} and tg.photos
+
+
+def test_listener_config_amazon_images_flag(monkeypatch):
+    from dealbot.config import ListenerConfig
+    base = {"TELEGRAM_API_ID": "1", "TELEGRAM_API_HASH": "h", "AMAZON_TAG": "t-21",
+            "SOURCE_CHANNELS": "@a", "TARGET_CHANNEL": "@b"}
+    for k, v in base.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.delenv("AMAZON_IMAGES", raising=False)
+    assert ListenerConfig.from_env().amazon_images is True            # por defeito ligado (decisão do dono)
+    for off in ("0", "false", "no", "off", " FALSE "):
+        monkeypatch.setenv("AMAZON_IMAGES", off)
+        assert ListenerConfig.from_env().amazon_images is False
+    monkeypatch.setenv("AMAZON_IMAGES", "1")
+    assert ListenerConfig.from_env().amazon_images is True

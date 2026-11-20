@@ -32,6 +32,7 @@ class ListenerConfig:
     target_channel: str
     session_path: str = "data/dealbot.session"
     audit_chat: str = "me"
+    amazon_images: bool = True      # imagem oficial por ASIN primeiro; o recorte da foto do canal é o plano B
 
     @classmethod
     def from_env(cls) -> "ListenerConfig":
@@ -42,6 +43,7 @@ class ListenerConfig:
         sources = [c.strip() for c in os.environ["SOURCE_CHANNELS"].split(",") if c.strip()]
         session = os.environ.get("TELEGRAM_SESSION_PATH", "data/dealbot.session").strip()
         audit = os.environ.get("AUDIT_CHAT", "me").strip()
+        amazon_images = os.environ.get("AMAZON_IMAGES", "1").strip().lower() not in ("0", "false", "no", "off")
 
         return cls(
             api_id=int(os.environ["TELEGRAM_API_ID"].strip()),
@@ -51,5 +53,6 @@ class ListenerConfig:
             target_channel=os.environ["TARGET_CHANNEL"].strip(),
             session_path=session,
             audit_chat=audit,
+            amazon_images=amazon_images,
         )
 

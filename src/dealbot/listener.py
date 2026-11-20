@@ -8,6 +8,7 @@ from telethon import TelegramClient, events
 
 from .card import make_card
 from .cleaner import GENERIC_TITLE, clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message, extract_product_title
+from .amazon_image import fetch_amazon_image
 from .product_image import isolate_product
 from .price_extractor import extract_prices
 from .compose import short_title
@@ -132,20 +133,27 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
                              price_before=price_before, price_after=price_after)
         return
 
+    # Foto do produto: imagem oficial pelo ASIN; se não houver (ou estiver desligada), recorte da foto do canal.
+    product_photo, image_source = None, ""
+    if cfg.amazon_images:
+        product_photo = await asyncio.to_thread(fetch_amazon_image, detected_asin)
+        image_source = "Amazon (por ASIN)"
+    if product_photo is None and photo_data:
+        product_photo = await asyncio.to_thread(isolate_product, photo_data)
+        image_source = "recorte da foto do canal"
+
     card_bytes = None
-    if photo_data:
+    if product_photo:
         try:
-            # Só depois de ler os preços: corta a foto ao produto (sem faixa de preço, logótipo nem marca do canal)
-            photo_data = await asyncio.to_thread(isolate_product, photo_data)
             card_bytes = make_card(
-                photo_data,
+                product_photo,
                 title,
                 "",
                 cfg.target_channel,
                 price=price_after,
                 old_price=price_before,
             )
-            logger.info("🎨 Cartão visual com branding gerado com sucesso!")
+            logger.info("🎨 Cartão gerado (imagem: %s)", image_source)
         except Exception as e:
             logger.warning("Não foi possível gerar o cartão personalizado (%s).", e)
             await _audit_discard(client, cfg, source_display, detected_asin, original_url,
@@ -175,6 +183,7 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
                     f"🎯 <b>[MEGAPROMO - NOVA PUBLICAÇÃO]</b>\n\n"
                     f"📢 <b>Origem:</b> {source_display}\n"
                     f"📦 <b>ASIN:</b> <code>{detected_asin}</code>\n"
+                    + (f"🖼 <b>Imagem:</b> {image_source}\n" if image_source else "")
                     + (f"💰 <b>Preços lidos (OCR):</b> antes {price_before} → agora {price_after}\n" if price_after else "")
                     + f"🔗 <b>Original:</b> <a href=\"{original_url}\">Ver link original</a>\n"
                     f"🚀 <b>Teu Link:</b> <a href=\"{affiliate_link}\">Ver com tua tag</a>\n"

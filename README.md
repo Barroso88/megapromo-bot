@@ -103,3 +103,8 @@ Para correr a suite de testes automatizados:
 
 ## Preço no cartão (opcional)
 Ao responder com o link, podes juntar os preços que vês na Amazon, por exemplo `507,25 284,80` (antigo e atual, em qualquer ordem). O cartão mostra preço riscado, desconto e preço atual. Sem preços, o cartão fica só com título. A exatidão do preço é responsabilidade tua (regras do programa de Associados).
+
+## Imagem do produto (monitor)
+O monitor tenta primeiro a imagem principal do produto pelo ASIN (`images-eu.ssl-images-amazon.com/images/P/<ASIN>.01.LZZZZZZZ.jpg`). Se a Amazon não tiver imagem (devolve um GIF de 1×1), ou se for pequena demais, usa o recorte da foto do canal de origem. O relatório de auditoria indica qual foi usada.
+
+**Uso por conta e risco do dono.** Esse endereço não consta, pelo que se leu em 2026-11, do Acordo de Associados da Amazon.es como fonte autorizada de imagens (a documentada é a API). As regras sobre robôs de extração, cache e modificação de imagens podem aplicar-se. Para desligar e usar só o recorte do canal, define `AMAZON_IMAGES=0`. O pedido identifica-se como robô no `User-Agent`.
