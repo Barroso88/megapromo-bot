@@ -48,17 +48,26 @@ def _band(d: ImageDraw.ImageDraw) -> None:
     d.polygon(pts, fill=GREY_BG)
 
 
-def _starburst(card, cx, cy, r, pct):
+def _badge(card: Image.Image, cx: int, cy: int, r: int, pct: int, angle: float = 12) -> None:
+    """Selo amarelo de desconto, inclinado na diagonal, com sombra."""
     import math
+    n = 2 * r + 80
+    layer = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    c = n / 2
     pts = []
     for i in range(32):
         ang = math.pi * 2 * i / 32 + 0.1
         rr = r if i % 2 == 0 else r * 0.86
-        pts.append((cx + rr * math.cos(ang), cy + rr * math.sin(ang)))
-    shadow = Image.new("RGBA", card.size, (0, 0, 0, 0))
+        pts.append((c + rr * math.cos(ang), c + rr * math.sin(ang)))
+    shadow = Image.new("RGBA", (n, n), (0, 0, 0, 0))
     ImageDraw.Draw(shadow).polygon([(x + 5, y + 9) for x, y in pts], fill=(0, 0, 0, 110))
-    card.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(7))) if card.mode == "RGBA" else None
-    return pts
+    layer.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(7)))
+    d = ImageDraw.Draw(layer)
+    d.polygon(pts, fill=GOLD)
+    f, tx = _font(42), f"-{pct}%"
+    d.text((c - d.textlength(tx, font=f) / 2, c - 25), tx, font=f, fill=(190, 20, 20))
+    layer = layer.rotate(angle, resample=Image.BICUBIC)
+    card.alpha_composite(layer, (int(cx - c), int(cy - c)))
 
 
 def _price_block(card: Image.Image, price: str, old_price: str | None) -> Image.Image:
@@ -80,19 +89,14 @@ def _price_block(card: Image.Image, price: str, old_price: str | None) -> Image.
     pt = f"{price}€"
     d.text((S - 45 - d.textlength(pt, font=fp), y0 + (h - 84) // 2 - 6), pt, font=fp, fill=WHITE)
     if old_price:
-        fo = _font(46)
+        fo = _font(58)
         ot = f"{old_price}€"
         ox = S - 65 - d.textlength(ot, font=fo)
-        d.text((ox, 835), ot, font=fo, fill=GREY_TXT)
-        d.line((ox - 8, 861, S - 57, 861), fill=RED, width=5)
+        d.text((ox, 826), ot, font=fo, fill=GREY_TXT)
+        d.line((ox - 8, 861, S - 57, 861), fill=RED, width=6)
         pct = discount(price, old_price)
         if pct:
-            pts = _starburst(card, 537, 905, 76, pct)
-            d = ImageDraw.Draw(card)
-            d.polygon(pts, fill=GOLD)
-            f = _font(40)
-            tx = f"-{pct}%"
-            d.text((537 - d.textlength(tx, font=f) / 2, 905 - 24), tx, font=f, fill=(190, 20, 20))
+            _badge(card, 537, 905, 76, pct)
     return card.convert("RGB")
 
 
