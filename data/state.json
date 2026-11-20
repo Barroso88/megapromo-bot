@@ -1,5 +1,5 @@
 {
- "offset": 249577648,
+ "offset": 249577664,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -15,7 +15,10 @@
   "https://www.chollometro.com/ofertas/colgate-triple-accion-pasta-de-dientes-6x75ml-proteccion-anticaries-dientes-blancos-y-aliento-fresco-2079693",
   "https://www.chollometro.com/ofertas/manfrotto-advanced-shoulder-bag-m-iii-para-camara-reflex-y-sin-espejo-con-objetivo-estuche-para-camara-con-soporte-para-tripode-y-funda-2079692",
   "https://www.chollometro.com/ofertas/dispensador-de-agua-con-deposito-7l-2079687",
-  "https://www.chollometro.com/ofertas/poco-f9-ultra-16512-negro-8050mah-carga-100-w-snapdragon-8-elite-gen-5-2079685"
+  "https://www.chollometro.com/ofertas/poco-f9-ultra-16512-negro-8050mah-carga-100-w-snapdragon-8-elite-gen-5-2079685",
+  "https://www.chollometro.com/ofertas/caja-de-caudales-con-llave-extra-grande-300-x-90-x-240-mm-2080258",
+  "https://www.chollometro.com/ofertas/pop-funko-animation-naruto-rock-lee-merchandising-oficial-2080255",
+  "https://www.chollometro.com/ofertas/la-silla-espanola-pack-de-4-sillas-de-comedor-estilo-contemporaneo-modelo-guadix-2080254"
  ],
  "pending": {
   "3": {
@@ -95,6 +98,24 @@
    "category": "Electrónica",
    "price": "807,40€",
    "image": "https://static.chollometro.com/threads/raw/tzLEG/2079685_1/re/150x150/qt/55/2079685_1.jpg"
+  },
+  "22": {
+   "title": "Caja de Caudales con Llave, Extra Grande, 300 x 90 x 240 mm",
+   "category": "Hogar, vivienda y oficina",
+   "price": "18,42€",
+   "image": "https://static.chollometro.com/threads/raw/8V6cH/2080258_1/re/150x150/qt/55/2080258_1.jpg"
+  },
+  "23": {
+   "title": "POP Funko Animation: Naruto - Rock Lee Merchandising Oficial",
+   "category": "Juguetes, familia e hijos",
+   "price": "12,80€",
+   "image": "https://static.chollometro.com/threads/raw/nwYop/2080255_1/re/150x150/qt/55/2080255_1.jpg"
+  },
+  "24": {
+   "title": "La Silla Española Pack de 4 sillas de Comedor Estilo Contemporáneo. Modelo Guadix",
+   "category": "Hogar, vivienda y oficina",
+   "price": "105,83€",
+   "image": "https://static.chollometro.com/threads/raw/VIW5h/2080254_1/re/150x150/qt/55/2080254_1.jpg"
   }
  },
  "published": [
