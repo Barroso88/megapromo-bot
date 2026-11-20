@@ -126,3 +126,18 @@ def test_dedupe_replaces_the_previous_entry_for_the_same_asin_and_reason(server)
     save_discard_to_history(tmp, asin="B0TEST1234", title="t", source="s", original_url="u", reason="outro motivo")
     items = json.loads(get(port, "/api/discarded")[1])
     assert [i["reason"] for i in items] == ["outro motivo", "já publicado (produto repetido)"]
+
+
+def test_status_endpoint_reports_the_monitor_state_and_a_server_clock(server):
+    tmp, port = server
+    status, body = get(port, "/api/status")
+    assert status == 200 and json.loads(body)["state"] == "unknown"      # sem ficheiro: não inventa "ativo"
+    (tmp / "status.json").write_text(json.dumps({"last_event_at": "2026-11-20T23:00:00", "connected": True,
+                                                 "events_total": 5, "started_at": "2026-11-20T22:00:00"}))
+    data = json.loads(get(port, "/api/status")[1])
+    assert data["events_total"] == 5 and data["connected"] is True and data["now"]
+
+
+def test_dashboard_status_label_is_dynamic_not_hardcoded():
+    assert "Monitor Ativo" not in HTML_TEMPLATE
+    assert "monitor-status" in HTML_TEMPLATE and "/api/status" in HTML_TEMPLATE

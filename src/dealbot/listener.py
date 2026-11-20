@@ -16,6 +16,7 @@ from .compose import short_title
 from .config import ListenerConfig
 from .links import LinkError, analyze_link, build_affiliate_link, title_from_url
 from .translate import to_pt
+from .monitor_status import Status, watchdog_loop
 from .state import State
 from .web import save_deal_to_history, save_discard_to_history, start_web_server
 
@@ -275,6 +276,9 @@ async def start_listener(cfg: ListenerConfig):
     state_file = Path(cfg.session_path).parent / "state.json"
     state = State.load(state_file)
     logger.info("Estado carregado: %d produtos já publicados.", len(state.published))
+    status = Status(state_file.parent / "status.json")
+    status.set(connected=False)
+    status.save()
 
     # Inicia o Dashboard Web na porta configurada (padrão: 8080)
     web_port = int(Path().cwd().joinpath("").parent and "8080")
@@ -291,6 +295,9 @@ async def start_listener(cfg: ListenerConfig):
     client = TelegramClient(str(session_path), cfg.api_id, cfg.api_hash)
     await client.start()
     logger.info("🚀 Telethon ligado com sucesso! A validar canais configurados...")
+    status.set(connected=True)
+    status.save()
+    watchdog = asyncio.create_task(watchdog_loop(client, status))      # reconecta e pede as mensagens em falta
 
     valid_chats = []
     for ch in cfg.source_channels:
@@ -309,6 +316,9 @@ async def start_listener(cfg: ListenerConfig):
         @client.on(events.NewMessage(chats=valid_chats))
         async def handler(event):
             try:
+                chat = getattr(event, "chat", None)
+                status.event(f"@{chat.username}" if getattr(chat, "username", None) else getattr(chat, "title", "?"))
+                status.save()
                 await handle_message_safely(client, event.message, cfg, state, state_file)
             except Exception as e:
                 logger.error("Erro inesperado no handler de mensagens: %s", e)

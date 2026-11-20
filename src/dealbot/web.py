@@ -35,9 +35,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <span class="bg-gray-800 text-xs px-2.5 py-0.5 rounded-full text-gray-300 font-mono">Unraid Live</span>
             </div>
             <div class="flex items-center space-x-4">
-                <div class="flex items-center space-x-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-sm text-gray-300 font-medium">Monitor Ativo</span>
+                <div id="monitor-status" class="flex items-center space-x-2" title="Estado real da ligação ao Telegram">
+                    <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-gray-500"></span>
+                    <span id="status-text" class="text-sm text-gray-300 font-medium">A verificar…</span>
                 </div>
                 <a href="https://t.me/megapromo_pt" target="_blank" class="bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">Abrir Canal</a>
             </div>
@@ -108,6 +108,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 renderDeals(data);
                 const res2 = await fetch('/api/discarded');
                 renderDiscarded(await res2.json());
+                fetchStatus();
             } catch (e) {
                 console.error("Erro ao carregar histórico:", e);
             }
@@ -153,6 +154,29 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 </div>
                 `;
             }).join('');
+        }
+
+        function ageText(min) {
+            if (min < 1) return 'agora mesmo';
+            if (min < 60) return `há ${Math.round(min)} min`;
+            if (min < 1440) return `há ${Math.floor(min / 60)} h ${Math.round(min % 60)} min`;
+            return `há ${Math.floor(min / 1440)} d`;
+        }
+
+        async function fetchStatus() {
+            const dot = document.getElementById('status-dot'), text = document.getElementById('status-text');
+            const set = (color, msg) => { dot.className = `w-2.5 h-2.5 rounded-full ${color}`; text.textContent = msg; };
+            try {
+                const st = await (await fetch('/api/status')).json();
+                if (st.state === 'unknown') return set('bg-gray-500', 'Estado desconhecido (monitor antigo?)');
+                if (st.connected === false) return set('bg-red-500', 'Desligado do Telegram' + (st.last_error ? ` · ${st.last_error}` : ''));
+                if (!st.last_event_at) return set('bg-amber-500', 'Ligado · à espera da primeira mensagem');
+                const min = (new Date(st.now) - new Date(st.last_event_at)) / 60000;
+                const color = min < 20 ? 'bg-emerald-500 animate-pulse' : (min < 60 ? 'bg-amber-500' : 'bg-red-500');
+                set(color, `Última mensagem ${ageText(min)} · ${esc(st.last_event_source || '')}`);
+            } catch (e) {
+                set('bg-red-500', 'Painel sem resposta');
+            }
         }
 
         function renderDiscarded(items) {
@@ -209,6 +233,21 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(history_file.read_bytes())
             else:
                 self.wfile.write(b"[]")
+            return
+
+        elif parsed.path == "/api/status":
+            status_file = self.data_dir / "status.json"
+            try:
+                data = {"state": "known", **json.loads(status_file.read_text(encoding="utf-8"))}
+            except (OSError, ValueError):
+                data = {"state": "unknown"}
+            data["now"] = datetime.now().isoformat(timespec="seconds")
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
             return
 
         elif parsed.path == "/api/discarded":
