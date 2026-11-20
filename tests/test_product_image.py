@@ -77,3 +77,19 @@ def test_overlay_covering_most_of_the_image_falls_back_to_original():
     buf = io.BytesIO()
     im.save(buf, "PNG")
     assert isolate_product(buf.getvalue()) == buf.getvalue()
+
+
+@needs_ocr
+def test_price_text_above_the_colored_block_is_cut_even_if_ocr_cannot_read_it():
+    # Como no post real: o preço antigo riscado fica acima do bloco, separado do produto por um espaço em branco.
+    im = Image.new("RGB", (600, 400), (255, 255, 255))
+    d = ImageDraw.Draw(im)
+    d.ellipse((170, 40, 430, 200), fill=(30, 40, 60))
+    d.polygon([(0, 400), (0, 262), (300, 250), (600, 240), (600, 400)], fill=(244, 244, 247))
+    d.rectangle((420, 252, 560, 282), fill=(110, 110, 110))                    # "preço riscado" ilegível
+    d.rounded_rectangle((300, 300, 600, 370), radius=24, fill=(240, 100, 20))
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=95)
+    out = Image.open(io.BytesIO(isolate_product(buf.getvalue())))
+    assert out.height < 215                       # o retângulo cinzento (preço) já não está no recorte
+    assert not has_orange(out)

@@ -44,3 +44,20 @@ def test_compose_repost_caption():
     assert "🔥 <b>Auriculares Beats Studio Pro</b>" in caption
     assert "💥 Link: https://www.amazon.es/dp/B0DWDH32M8?tag=megapromopt-21" in caption
     assert "Como Associado da Amazon" in caption
+
+
+def test_title_ignores_percent_headline_with_markdown_and_finds_product_line():
+    from dealbot.cleaner import extract_product_title
+    text = ("🔥 32%! Excelente preço!** __Mínimo histórico!__\n\n"
+            "Orico Dock Mac Mini M4 com SSD 2TB\n👉 https://www.amazon.es/dp/B0FBWWW131")
+    assert extract_product_title(text) == "Orico Dock Mac Mini M4 com SSD 2TB"
+
+
+def test_title_strips_markdown_markers():
+    from dealbot.cleaner import extract_product_title
+    assert extract_product_title("**Gafas Hawkers** Polarizadas\nhttps://x") == "Gafas Hawkers Polarizadas"
+
+
+def test_only_headlines_give_generic_title():
+    from dealbot.cleaner import extract_product_title
+    assert extract_product_title("🔥 32%! Excelente preço! __Mínimo histórico!__ Aproveita já\nhttps://x") == "Oferta Especial"

@@ -9,9 +9,10 @@ from .links import find_url, extract_asin, build_affiliate_link
 USERNAME_RE = re.compile(r"@([a-zA-Z0-9_]{4,32})")
 TELEGRAM_LINK_RE = re.compile(r"https?://(?:t|telegram)\.me/[a-zA-Z0-9_+/]+")
 HTTP_LINK_RE = re.compile(r"https?://\S+")
+MARKDOWN_RE = re.compile(r"\*\*|__|``?|~~")
 
 CLICKBAIT_RE = re.compile(
-    r"^(?:🔥|⚡|💥|✨|🎯|👉|🏷️|📢|\s)*(?:pre[cç]o\s+m[íi]nimo|m[íi]nimo\s+hist[óo]rico|super\s+desconto|grande\s+baixa|oportunidade|imperd[íi]vel|aproveita|chollazo|chollo|oferta|promo[cç][ãa]o)",
+    r"^(?:🔥|⚡|💥|✨|🎯|👉|🏷️|📢|\s)*(?:\d{1,2}\s*%|excelente|bom\s+pre[cç]o|pre[cç]o\s+m[íi]nimo|m[íi]nimo\s+hist[óo]rico|super\s+desconto|grande\s+baixa|oportunidade|imperd[íi]vel|aproveita|chollazo|chollo|oferta|promo[cç][ãa]o)",
     re.IGNORECASE,
 )
 
@@ -20,11 +21,12 @@ def extract_product_title(raw_text: str, resolved_url: str | None = None) -> str
     """Extrai o nome real do produto ignorando chamadas genéricas como 'Preço mínimo histórico'."""
     lines = [l.strip() for l in (raw_text or "").splitlines() if l.strip()]
     for line in lines:
+        line = MARKDOWN_RE.sub("", line)                      # **negrito**, __itálico__, `código`, ~~riscado~~
         clean = line.strip(" -—•*~#🔥⚡💥🎯👉 ")
         if not clean or clean.lower().startswith("http"):
             continue
-        # Se for apenas uma frase de chamariz curta, ignora e procura a linha seguinte
-        if CLICKBAIT_RE.search(clean) and len(clean.split()) <= 5:
+        # Frases de chamariz ("32%! Excelente preço! Mínimo histórico!") não são o nome do produto
+        if CLICKBAIT_RE.search(clean) and len(clean.split()) <= 8:
             continue
         return short_title(clean, 140)
 

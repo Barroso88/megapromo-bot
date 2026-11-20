@@ -58,6 +58,37 @@ def _overlay_text_limits(im: Image.Image) -> tuple[int, int]:
     return top, bottom
 
 
+def _main_rows(mask: Image.Image) -> tuple[int, int]:
+    """Intervalo vertical do produto: o maior bloco de conteúdo, mais os blocos grandes ligados a ele.
+
+    Restos pequenos separados por um espaço em branco (o preço antigo riscado acima da faixa, um título)
+    ficam de fora.
+    """
+    h = mask.height
+    rows = list(mask.resize((1, h), Image.BOX).tobytes())
+    ink = [v > 2 for v in rows]
+    gap_min = max(6, int(0.04 * h))
+    segs, start, blank = [], None, 0
+    for y, has in enumerate(ink):
+        if has:
+            if start is None:
+                start = y
+            blank, last = 0, y
+        elif start is not None:
+            blank += 1
+            if blank >= gap_min:
+                segs.append((start, last))
+                start = None
+    if start is not None:
+        segs.append((start, last))
+    if len(segs) < 2:
+        return 0, h
+    mass = [sum(rows[a:b + 1]) for a, b in segs]
+    biggest = max(mass)
+    keep = [seg for seg, m in zip(segs, mass) if m >= 0.3 * biggest]
+    return keep[0][0], keep[-1][1] + 1
+
+
 def _encode(im: Image.Image) -> bytes:
     out = io.BytesIO()
     im.convert("RGB").save(out, "JPEG", quality=92)
@@ -88,6 +119,9 @@ def isolate_product(photo: bytes) -> bytes:
     ink = mask.histogram()[255] / (region.width * region.height)
     if ink > 0.85:
         return _encode(region) if overlay_found else photo
+    y0, y1 = _main_rows(mask)
+    mask = mask.crop((0, y0, mask.width, y1))
+    region = region.crop((0, y0, region.width, y1))
     box = mask.filter(ImageFilter.MinFilter(3)).getbbox()
     if not box or (box[2] - box[0]) * (box[3] - box[1]) < 0.04 * region.width * region.height:
         return _encode(region) if overlay_found else photo

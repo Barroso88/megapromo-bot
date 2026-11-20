@@ -26,7 +26,7 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
     if not urls:
         return
 
-    raw_text = (message.text or "") or (getattr(message, "message", "") or "")
+    raw_text = getattr(message, "raw_text", None) or (message.text or "") or (getattr(message, "message", "") or "")
     
     # Obtém o nome/título do canal de origem para o log
     source_display = "Canal Desconhecido"
