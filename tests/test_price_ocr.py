@@ -123,6 +123,7 @@ def _run_with_fake(monkeypatch, outputs):
     from dealbot import price_extractor as pe
     fake = _FakeTesseract(outputs)
     monkeypatch.setattr(pe, "pytesseract", fake)
+    monkeypatch.setattr(pe, "_price_block_box", lambda im: None)      # estes testes são só das leituras globais
     return pe.extract_prices_from_image(banner()), fake
 
 
@@ -148,3 +149,81 @@ def test_a_misread_number_with_many_votes_does_not_hide_the_real_pair(monkeypatc
 def test_all_calls_failing_returns_nothing_without_raising(monkeypatch):
     result, _ = _run_with_fake(monkeypatch, ["ERRO"] * 20)
     assert result == (None, None)
+
+
+# ---- escolha do par a partir dos votos (valores reais lidos nas fotos dos canais) -------------------------------
+
+def _pair(block_new, block_old, global_votes, pct):
+    from dealbot.price_extractor import choose_pair
+    return choose_pair(block_new, block_old, global_votes, pct)
+
+
+def test_choose_pair_uses_the_stated_discount_to_fix_a_misread_old_price():
+    # ferro de engomar: o risco faz o OCR ler 427,07 em vez de 127,07; o texto diz -55 %
+    new, old = {56.91: 3}, {127.07: 1, 427.07: 2}
+    assert _pair(new, old, {427.07: 3, 96.91: 2}, 55) == ("127,07€", "56,91€")
+
+
+def test_choose_pair_real_cases():
+    assert _pair({71.14: 3}, {152.47: 2, 452.47: 1}, {152.47: 3, 71.14: 3, 1.14: 2}, 53) == ("152,47€", "71,14€")   # drone
+    assert _pair({36.84: 3}, {55.40: 3}, {36.84: 6, 55.40: 1}, 34) == ("55,40€", "36,84€")                         # Diesel
+    assert _pair({63.76: 3}, {111.81: 2}, {111.81: 3, 63.76: 3}, None) == ("111,81€", "63,76€")                    # sem % no texto
+    assert _pair({17.77: 3}, {25.49: 1, 22.40: 1, 25.40: 1}, {25.40: 4}, 30) == ("25,40€", "17,77€")              # óculos
+
+
+def test_choose_pair_rejects_when_nothing_matches_the_stated_discount():
+    assert _pair({56.91: 3}, {427.07: 3}, {}, 55) is None                      # nenhum candidato dá ~55 %
+    assert _pair({56.91: 3}, {127.07: 3}, {}, 20) is None                      # o texto diz 20 %, os preços dão 55 %
+
+
+def test_choose_pair_without_stated_discount_needs_two_votes_for_the_old_price():
+    assert _pair({56.91: 3}, {127.07: 1}, {}, None) is None
+    assert _pair({56.91: 3}, {127.07: 2}, {}, None) == ("127,07€", "56,91€")
+
+
+def test_choose_pair_falls_back_to_global_votes_when_the_block_is_not_readable():
+    assert _pair({}, {}, {152.47: 3, 71.14: 3, 1.14: 4}, None) == ("152,47€", "71,14€")      # 1,14 tem mais votos mas é impossível
+    assert _pair({}, {}, {152.47: 3, 71.14: 3, 1.14: 4}, 53) == ("152,47€", "71,14€")
+    assert _pair({}, {}, {152.47: 3, 71.14: 3}, 20) is None
+    assert _pair({}, {}, {}, None) is None
+
+
+def dibbs_like(old="127,07€", new="56,91€") -> bytes:
+    """Imagem 1000x1000 como as do @cupoes/dezcontos: produto, 'disponível na amazon', preço riscado e bloco laranja."""
+    im = Image.new("RGB", (1000, 1000), (255, 255, 255))
+    d = ImageDraw.Draw(im)
+    d.rectangle((250, 80, 750, 650), fill=(120, 150, 190))                      # produto azul acinzentado (não laranja)
+    d.polygon([(0, 1000), (0, 830), (500, 740), (1000, 715), (1000, 1000)], fill=(245, 244, 240))
+    d.text((60, 900), "amazon", font=_font(80), fill=(30, 40, 60))
+    f_old, f_new = _font(70), _font(110)
+    d.text((1000 - 60 - d.textlength(old, font=f_old), 775), old, font=f_old, fill=(85, 85, 85))
+    d.line((1000 - 60 - d.textlength(old, font=f_old) - 10, 812, 940, 812), fill=(60, 60, 60), width=7)
+    for x in range(509, 1000):                                                  # degradê laranja -> vermelho
+        t = (x - 509) / 491
+        d.line((x, 858, x, 1000), fill=(int(245 - 30 * t), int(125 - 70 * t), int(40 - 20 * t)))
+    d.text((1000 - 60 - d.textlength(new, font=f_new), 880), new, font=f_new, fill=(255, 255, 255))
+    out = io.BytesIO()
+    im.save(out, "JPEG", quality=92)
+    return out.getvalue()
+
+
+@needs_ocr
+def test_template_image_with_a_blue_product_is_read_by_block_and_old_price_crops():
+    from dealbot.price_extractor import extract_prices_from_image
+    assert extract_prices_from_image(dibbs_like(), stated_pct=55) == ("127,07€", "56,91€")
+    assert extract_prices_from_image(dibbs_like("55,40€", "36,84€"), stated_pct=34) == ("55,40€", "36,84€")
+
+
+@needs_ocr
+def test_image_prices_that_contradict_the_text_percentage_are_still_discarded():
+    assert extract_prices("🔥 -20%! Excelente preço!", photo_bytes=dibbs_like()) == (None, None)
+    assert extract_prices("🤯 -55%! MEGA preço!", photo_bytes=dibbs_like()) == ("127,07€", "56,91€")
+
+
+def test_a_block_reading_contradicted_by_the_global_votes_is_not_trusted():
+    # bloco leu 99,99 (2 votos) mas a imagem toda leu 59,99 5 vezes e 79,99 duas
+    assert _pair({99.99: 2, 9.99: 1}, {}, {59.99: 5, 79.99: 2, 49.99: 2, 99.99: 1}, None) == ("79,99€", "59,99€")
+
+
+def test_a_unanimous_block_reading_is_trusted_even_without_global_support():
+    assert _pair({56.91: 3}, {127.07: 1}, {96.91: 2}, 55) == ("127,07€", "56,91€")
