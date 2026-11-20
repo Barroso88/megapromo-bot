@@ -10,7 +10,7 @@ from telethon import TelegramClient, events
 from .card import make_card
 from .cleaner import GENERIC_TITLE, clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message, extract_product_title
 from .amazon_image import fetch_amazon_image
-from .product_image import isolate_product
+from .product_image import isolate_product, trim_background
 from .price_extractor import extract_prices
 from .compose import short_title
 from .config import ListenerConfig
@@ -159,26 +159,33 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
         target_handle=cfg.target_channel,
     )
 
-    # Só se publica quando os DOIS preços (antes e agora) foram lidos: do texto ou da imagem (OCR).
+    # Os preços (texto ou OCR da imagem) só entram no cartão se os DOIS forem lidos. Por defeito a oferta sai na mesma
+    # sem preços; com REQUIRE_PRICES=1 é descartada. Com SHOW_PRICES=0 nunca se leem nem se mostram.
     photo_data = None
     if message.photo:
         try:
             photo_data = await message.download_media(file=bytes)
         except Exception as e:
             logger.warning("Não foi possível descarregar a foto (%s).", e)
-    price_before, price_after = await asyncio.to_thread(extract_prices, raw_text, photo_data)
-    logger.info("💰 Preços detetados: Antes=%s, Depois=%s", price_before, price_after)
-    if not (price_before and price_after):
-        await _audit_discard(client, cfg, source_display, detected_asin, original_url,
-                             "preços antes/depois não detetados",
-                             data_dir=state_file.parent, title=title,
-                             price_before=price_before, price_after=price_after, excerpt=raw_text)
-        return
+    price_before = price_after = None
+    if cfg.show_prices:
+        read_before, read_after = await asyncio.to_thread(extract_prices, raw_text, photo_data)
+        logger.info("💰 Preços detetados: Antes=%s, Depois=%s", read_before, read_after)
+        if read_before and read_after:
+            price_before, price_after = read_before, read_after
+        elif cfg.require_prices:
+            await _audit_discard(client, cfg, source_display, detected_asin, original_url,
+                                 "preços antes/depois não detetados",
+                                 data_dir=state_file.parent, title=title,
+                                 price_before=read_before, price_after=read_after, excerpt=raw_text)
+            return
 
     # Foto do produto: imagem oficial pelo ASIN; se não houver (ou estiver desligada), recorte da foto do canal.
     product_photo, image_source = None, ""
     if cfg.amazon_images:
         product_photo = await asyncio.to_thread(fetch_amazon_image, detected_asin)
+        if product_photo is not None:
+            product_photo = trim_background(product_photo)        # tira o branco à volta: o produto enche o cartão
         image_source = "Amazon (por ASIN)"
     if product_photo is None and photo_data:
         product_photo = await asyncio.to_thread(isolate_product, photo_data)

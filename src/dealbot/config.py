@@ -32,6 +32,8 @@ class ListenerConfig:
     target_channel: str
     session_path: str = "data/dealbot.session"
     audit_chat: str = "me"
+    show_prices: bool = True        # ler (OCR/texto) e mostrar os preços no cartão, quando legíveis
+    require_prices: bool = False    # True: descartar ofertas sem os dois preços (antes: sempre assim)
     amazon_images: bool = True      # imagem oficial por ASIN primeiro; o recorte da foto do canal é o plano B
 
     @classmethod
@@ -43,6 +45,8 @@ class ListenerConfig:
         sources = [c.strip() for c in os.environ["SOURCE_CHANNELS"].split(",") if c.strip()]
         session = os.environ.get("TELEGRAM_SESSION_PATH", "data/dealbot.session").strip()
         audit = os.environ.get("AUDIT_CHAT", "me").strip()
+        show_prices = os.environ.get("SHOW_PRICES", "1").strip().lower() not in ("0", "false", "no", "off")
+        require_prices = os.environ.get("REQUIRE_PRICES", "0").strip().lower() in ("1", "true", "yes", "on")
         amazon_images = os.environ.get("AMAZON_IMAGES", "1").strip().lower() not in ("0", "false", "no", "off")
 
         return cls(
@@ -53,6 +57,8 @@ class ListenerConfig:
             target_channel=os.environ["TARGET_CHANNEL"].strip(),
             session_path=session,
             audit_chat=audit,
+            show_prices=show_prices,
+            require_prices=require_prices,
             amazon_images=amazon_images,
         )
 

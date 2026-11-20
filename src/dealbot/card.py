@@ -132,7 +132,12 @@ def make_card(photo: bytes, title: str, category: str, handle: str,
         has_badge = bool(price and old_price and discount(price, old_price))
         free_right = 461 if has_badge else 553
         logo = Image.open(LOGO).convert("RGBA").resize((200, 200), Image.LANCZOS)
-        card.paste(logo, ((free_right - 200) // 2, 947 - 100), logo)
+        if price:
+            card.paste(logo, ((free_right - 200) // 2, 947 - 100), logo)
+        else:                                   # sem preço: logótipo e @canal lado a lado, ao centro da faixa
+            card.paste(logo, (300, 947 - 100), logo)
+            fh = _font(52)
+            d.text((540, 947 - 32), handle, font=fh, fill=NAVY)
 
     if price:
         card = _price_block(card, price, old_price)

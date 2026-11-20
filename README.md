@@ -108,3 +108,8 @@ Ao responder com o link, podes juntar os preços que vês na Amazon, por exemplo
 O monitor tenta primeiro a imagem principal do produto pelo ASIN (`images-eu.ssl-images-amazon.com/images/P/<ASIN>.01.LZZZZZZZ.jpg`). Se a Amazon não tiver imagem (devolve um GIF de 1×1), ou se for pequena demais, usa o recorte da foto do canal de origem. O relatório de auditoria indica qual foi usada.
 
 **Uso por conta e risco do dono.** Esse endereço não consta, pelo que se leu em 2026-11, do Acordo de Associados da Amazon.es como fonte autorizada de imagens (a documentada é a API). As regras sobre robôs de extração, cache e modificação de imagens podem aplicar-se. Para desligar e usar só o recorte do canal, define `AMAZON_IMAGES=0`. O pedido identifica-se como robô no `User-Agent`.
+
+## Preços nos cartões (monitor)
+- Por defeito os preços são **opcionais**: se o monitor lê os dois (antigo e atual) da imagem ou do texto, o cartão leva preço riscado, desconto e preço atual. Se não, a oferta sai na mesma, com imagem, nome e logótipo.
+- `REQUIRE_PRICES=1`: descarta as ofertas sem os dois preços (comportamento antigo).
+- `SHOW_PRICES=0`: nunca lê nem mostra preços (corta a leitura por OCR). Recomendado se quiseres evitar o risco das regras de preços do Acordo de Associados (os preços só devem vir da API ou de links da Amazon).

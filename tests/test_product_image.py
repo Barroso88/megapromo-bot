@@ -161,3 +161,34 @@ def test_a_saturated_product_near_the_top_is_not_mistaken_for_a_brand_bar():
     im.save(buf, "JPEG", quality=95)
     out = Image.open(io.BytesIO(isolate_product(buf.getvalue())))
     assert has_blue(out)                                         # o produto azul fica
+
+
+def test_trim_background_crops_white_margins_of_an_amazon_style_image():
+    from dealbot.product_image import trim_background
+    im = Image.new("RGB", (500, 500), (255, 255, 255))
+    ImageDraw.Draw(im).rectangle((200, 150, 300, 350), fill=(120, 60, 20))
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=95)
+    out = Image.open(io.BytesIO(trim_background(buf.getvalue())))
+    assert out.width < 160 and out.height < 260 and dark_ratio(out) > 0.25      # só o produto, com margem pequena
+
+
+def test_trim_background_leaves_full_images_blank_images_and_garbage_alone():
+    from dealbot.product_image import trim_background
+    full = Image.new("RGB", (300, 300), (90, 120, 60))
+    buf = io.BytesIO()
+    full.save(buf, "PNG")
+    assert trim_background(buf.getvalue()) == buf.getvalue()                    # sem fundo branco: não corta
+    white = io.BytesIO()
+    Image.new("RGB", (300, 300), (255, 255, 255)).save(white, "PNG")
+    assert trim_background(white.getvalue()) == white.getvalue()                # nada a recortar
+    assert trim_background(b"nao e imagem") == b"nao e imagem"
+
+
+def test_trim_background_keeps_most_of_an_image_that_already_fills_the_frame():
+    from dealbot.product_image import trim_background
+    im = Image.new("RGB", (400, 400), (255, 255, 255))
+    ImageDraw.Draw(im).rectangle((10, 10, 390, 390), fill=(30, 40, 60))
+    buf = io.BytesIO()
+    im.save(buf, "PNG")
+    assert trim_background(buf.getvalue()) == buf.getvalue()                    # já ocupa >85 %: igual

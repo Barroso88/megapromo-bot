@@ -172,3 +172,27 @@ def isolate_product(photo: bytes) -> bytes:
     if flat_cut:
         out = _fade_bottom(out, ink_box[3] - box[1], max(12, int(0.14 * (ink_box[3] - ink_box[1]))))
     return _encode(out)
+
+
+def trim_background(photo: bytes) -> bytes:
+    """Corta as margens brancas de uma imagem de produto com fundo branco (ex: a da Amazon), para o produto encher o cartão.
+
+    Se não houver fundo branco, nada a cortar, ou o produto já ocupar quase tudo, devolve a imagem original.
+    """
+    try:
+        im = Image.open(io.BytesIO(photo))
+        im.load()
+        im = im.convert("RGB")
+    except Exception:
+        return photo
+    r, g, b = im.split()
+    mask = ImageChops.darker(ImageChops.darker(r, g), b).point(lambda p: 255 if p < 245 else 0)
+    box = mask.filter(ImageFilter.MinFilter(3)).getbbox()
+    if not box:
+        return photo
+    bw, bh = box[2] - box[0], box[3] - box[1]
+    if bw * bh > 0.85 * im.width * im.height:
+        return photo
+    pad = int(0.04 * max(bw, bh)) + 2
+    box = (max(box[0] - pad, 0), max(box[1] - pad, 0), min(box[2] + pad, im.width), min(box[3] + pad, im.height))
+    return _encode(im.crop(box))

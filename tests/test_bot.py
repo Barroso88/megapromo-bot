@@ -243,3 +243,19 @@ def test_listener_config_amazon_images_flag(monkeypatch):
         assert ListenerConfig.from_env().amazon_images is False
     monkeypatch.setenv("AMAZON_IMAGES", "1")
     assert ListenerConfig.from_env().amazon_images is True
+
+
+def test_listener_config_price_flags(monkeypatch):
+    from dealbot.config import ListenerConfig
+    base = {"TELEGRAM_API_ID": "1", "TELEGRAM_API_HASH": "h", "AMAZON_TAG": "t-21",
+            "SOURCE_CHANNELS": "@a", "TARGET_CHANNEL": "@b"}
+    for k, v in base.items():
+        monkeypatch.setenv(k, v)
+    for k in ("REQUIRE_PRICES", "SHOW_PRICES"):
+        monkeypatch.delenv(k, raising=False)
+    cfg = ListenerConfig.from_env()
+    assert cfg.show_prices is True and cfg.require_prices is False        # por defeito: preços opcionais
+    monkeypatch.setenv("REQUIRE_PRICES", " TRUE ")
+    assert ListenerConfig.from_env().require_prices is True
+    monkeypatch.setenv("SHOW_PRICES", "0")
+    assert ListenerConfig.from_env().show_prices is False

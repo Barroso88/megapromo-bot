@@ -155,12 +155,13 @@ def test_card_receives_only_the_product_photo_while_prices_come_from_the_origina
     assert cropped.height < Image.open(io.BytesIO(original)).height - 60   # faixa de preço removida da foto do cartão
 
 
-def _discard_case(tmp_path, text, photo_bytes=None, audit="@auditoria"):
+def _discard_case(tmp_path, text, photo_bytes=None, audit="@auditoria", require_prices=True):
     async def _test():
         client = MagicMock()
         client.send_file, client.send_message = AsyncMock(), AsyncMock()
         cfg = ListenerConfig(api_id=1, api_hash="h", amazon_tag="t-21", source_channels=["@f"],
-                             target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat=audit)
+                             target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat=audit,
+                             require_prices=require_prices)
         state, sf = State(published=[]), tmp_path / "state.json"
         state.save(sf)
         msg = SimpleNamespace(text=text, message=None, photo=object() if photo_bytes else None,
@@ -281,7 +282,7 @@ def test_amazon_images_can_be_switched_off(tmp_path, monkeypatch):
     assert Image.open(io.BytesIO(seen["photo"])).height < Image.open(io.BytesIO(original)).height - 60
 
 
-def _link_case(tmp_path, monkeypatch, text, final_url=None):
+def _link_case(tmp_path, monkeypatch, text, final_url=None, require_prices=False):
     import dealbot.links as links
     if final_url:
         monkeypatch.setattr(links, "_follow", lambda url, max_hops=5: final_url)
@@ -290,7 +291,8 @@ def _link_case(tmp_path, monkeypatch, text, final_url=None):
         client = MagicMock()
         client.send_file, client.send_message = AsyncMock(), AsyncMock()
         cfg = ListenerConfig(api_id=1, api_hash="h", amazon_tag="t-21", source_channels=["@f"],
-                             target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat="")
+                             target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat="",
+                             require_prices=require_prices)
         state, sf = State(published=[]), tmp_path / "state.json"
         state.save(sf)
         msg = SimpleNamespace(text=text, message=None, photo=None, media=None, reply_markup=None)
@@ -388,6 +390,70 @@ def test_price_failure_record_keeps_a_text_excerpt_to_diagnose_the_format(tmp_pa
     import json
     _link_case(tmp_path, monkeypatch,
                "🔥 BOM preço! Mínimo histórico!\nRockJam ▫️ Bluetooth Máquina karaoke 2 microfones\n"
-               "💰 29,99€\nhttps://www.amazon.es/dp/B0BXT76Z42")
+               "💰 29,99€\nhttps://www.amazon.es/dp/B0BXT76Z42", require_prices=True)
     item = json.loads((tmp_path / "discarded.json").read_text())[0]
     assert "preços" in item["reason"] and "29,99€" in item["excerpt"] and "RockJam" in item["excerpt"]
+
+
+
+def _no_price_case(tmp_path, monkeypatch, text, show_prices=True, require_prices=False):
+    """Post com imagem da Amazon por ASIN mas sem preços legíveis; devolve (client, state, o que chegou ao make_card)."""
+    import dealbot.listener as listener
+    from test_amazon_image import jpeg
+    seen = {}
+
+    def fake_card(photo, title, category, handle, price=None, old_price=None, **kw):
+        seen.update(price=price, old=old_price, title=title)
+        return b"CARD"
+
+    def no_ocr(*a, **k):
+        raise AssertionError("não devia ler preços")
+
+    monkeypatch.setattr(listener, "make_card", fake_card)
+    monkeypatch.setattr(listener, "fetch_amazon_image", lambda asin, *a, **k: jpeg(500, 500))
+    if not show_prices:
+        monkeypatch.setattr(listener, "extract_prices", no_ocr)
+
+    async def _test():
+        client = MagicMock()
+        client.send_file, client.send_message = AsyncMock(), AsyncMock()
+        cfg = ListenerConfig(api_id=1, api_hash="h", amazon_tag="t-21", source_channels=["@f"],
+                             target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat="",
+                             show_prices=show_prices, require_prices=require_prices)
+        state, sf = State(published=[]), tmp_path / "state.json"
+        state.save(sf)
+        msg = SimpleNamespace(text=text, message=None, photo=None, media=None, reply_markup=None)
+        await process_incoming_message(client, msg, cfg, state, sf)
+        return client, state
+
+    client, state = asyncio.run(_test())
+    return client, state, seen
+
+
+NO_PRICE_POST = "Super preço!\nHUGO BOSS The Scent | Eau de parfum feminino 30 ml\nhttps://www.amazon.es/dp/B0725GYPC9"
+
+
+def test_by_default_a_post_without_prices_is_published_with_a_card_without_price_block(tmp_path, monkeypatch):
+    client, state, seen = _no_price_case(tmp_path, monkeypatch, NO_PRICE_POST)
+    client.send_file.assert_called_once()
+    assert client.send_file.call_args.args[0] == "@meucanal" and "B0725GYPC9" in state.published
+    assert seen["price"] is None and seen["old"] is None and seen["title"].startswith("HUGO BOSS The Scent")
+
+
+def test_when_prices_are_required_a_post_without_them_is_discarded(tmp_path, monkeypatch):
+    client, state, seen = _no_price_case(tmp_path, monkeypatch, NO_PRICE_POST, require_prices=True)
+    client.send_file.assert_not_called()
+    assert "B0725GYPC9" not in state.published and not seen
+
+
+def test_with_show_prices_off_prices_are_never_read_or_shown(tmp_path, monkeypatch):
+    text = NO_PRICE_POST + "\n❌ Antes: 90€\n✅ Agora: 60€"
+    client, state, seen = _no_price_case(tmp_path, monkeypatch, text, show_prices=False)
+    client.send_file.assert_called_once()
+    assert seen["price"] is None and seen["old"] is None
+
+
+def test_prices_are_still_shown_when_both_are_read(tmp_path, monkeypatch):
+    text = NO_PRICE_POST + "\n❌ Antes: 90,00€\n✅ Agora: 60,00€"
+    client, state, seen = _no_price_case(tmp_path, monkeypatch, text)
+    assert (seen["old"], seen["price"]) == ("90,00€", "60,00€")

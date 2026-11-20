@@ -66,3 +66,13 @@ def test_logo_is_centered_in_the_free_space_left_of_the_discount_badge():
 def test_card_without_prices_has_no_offer_placeholder_block():
     img = Image.open(io.BytesIO(make_card(photo(), "x", "", "@canal")))
     assert sum(img.getpixel((1000, 1060))) > 600     # sem bloco preto (antes mostrava "OFERTA")
+
+
+def test_card_without_prices_shows_logo_and_channel_handle_in_the_band():
+    img = Image.open(io.BytesIO(make_card(photo(), "x", "", "@megapromo_pt")))
+    assert sum(img.getpixel((400, 947))) < 400            # logótipo (escuro) no centro-esquerda da faixa
+    assert sum(img.getpixel((40, 947))) > 600             # sem nada colado à esquerda
+    band = img.crop((540, 900, 1040, 1000))
+    dark = sum(1 for v in band.convert("L").tobytes() if v < 120)
+    assert dark > 150                                      # texto do @canal ao lado do logótipo
+    assert sum(img.getpixel((1000, 1060))) > 600           # e continua sem bloco preto
