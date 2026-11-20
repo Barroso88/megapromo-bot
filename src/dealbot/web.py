@@ -303,7 +303,7 @@ def _save_discard_photo(data_dir: Path, asin: str, photo: bytes | None) -> str |
 
 def save_discard_to_history(data_dir: Path, asin: str, title: str, source: str, original_url: str, reason: str,
                             price_before: str | None = None, price_after: str | None = None, excerpt: str = "",
-                            photo: bytes | None = None):
+                            photo: bytes | None = None, dedupe: bool = False):
     """Guarda uma oferta NÃO publicada (e o motivo) para aparecer no dashboard."""
     try:
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -314,6 +314,8 @@ def save_discard_to_history(data_dir: Path, asin: str, title: str, source: str, 
                 items = json.loads(file.read_text(encoding="utf-8"))
             except Exception:
                 items = []
+        if dedupe:                         # o mesmo produto repetido várias vezes só aparece uma vez (a mais recente)
+            items = [i for i in items if not (i.get("asin") == asin and i.get("reason") == reason)]
         image_file = _save_discard_photo(data_dir, asin, photo)
         items.insert(0, {
             "asin": asin, "title": title, "source": source, "original_url": original_url, "reason": reason,

@@ -120,6 +120,8 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
     # Deduplicação: se já publicámos este produto, ignora
     if detected_asin in state.published:
         logger.info("ℹ️ Produto %s já foi publicado anteriormente. Ignorando.", detected_asin)
+        save_discard_to_history(state_file.parent, detected_asin, _first_line(raw_text), source_display,
+                                original_url, "já publicado (produto repetido)", dedupe=True)
         if cfg.audit_chat:
             try:
                 audit_dup = (

@@ -469,3 +469,26 @@ def test_price_failure_keeps_the_source_photo_for_diagnosis(tmp_path):
     item = json.loads((tmp_path / "discarded.json").read_text())[0]
     assert item["image_file"] == "discarded_B09NYDLHYZ.jpg"
     assert Image.open(tmp_path / "cards" / item["image_file"]).size == (300, 200)
+
+
+def test_duplicate_offers_are_recorded_once_in_the_dashboard_and_still_reported_in_audit(tmp_path):
+    import json
+
+    async def _run():
+        client = MagicMock()
+        client.send_file, client.send_message = AsyncMock(), AsyncMock()
+        cfg = ListenerConfig(api_id=1, api_hash="h", amazon_tag="t-21", source_channels=["@f"],
+                             target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat="@auditoria")
+        state, sf = State(published=["B0DWDH32M8"]), tmp_path / "state.json"
+        state.save(sf)
+        for _ in range(3):
+            msg = SimpleNamespace(text="Super promoção Aspirador\nhttps://www.amazon.es/dp/B0DWDH32M8", message=None,
+                                  photo=None, media=None, reply_markup=None)
+            await process_incoming_message(client, msg, cfg, state, sf)
+        return client
+
+    client = asyncio.run(_run())
+    items = json.loads((tmp_path / "discarded.json").read_text())
+    assert len(items) == 1 and items[0]["asin"] == "B0DWDH32M8" and "já publicado" in items[0]["reason"]
+    assert client.send_message.call_count == 3                       # o aviso no Telegram continua a sair sempre
+    assert not any(c.args[0] == "@meucanal" for c in client.send_message.call_args_list)

@@ -116,3 +116,13 @@ def test_discard_without_photo_or_asin_saves_no_file(server):
     save_discard_to_history(tmp, asin="", title="t", source="s", original_url="u", reason="r", photo=b"x")
     save_discard_to_history(tmp, asin="B0TEST1234", title="t", source="s", original_url="u", reason="r")
     assert list((tmp / "cards").glob("discarded_*.jpg")) == []
+
+
+def test_dedupe_replaces_the_previous_entry_for_the_same_asin_and_reason(server):
+    tmp, port = server
+    for _ in range(3):
+        save_discard_to_history(tmp, asin="B0TEST1234", title="t", source="s", original_url="u",
+                                reason="já publicado (produto repetido)", dedupe=True)
+    save_discard_to_history(tmp, asin="B0TEST1234", title="t", source="s", original_url="u", reason="outro motivo")
+    items = json.loads(get(port, "/api/discarded")[1])
+    assert [i["reason"] for i in items] == ["outro motivo", "já publicado (produto repetido)"]
