@@ -1,6 +1,7 @@
 """Limpeza e reformatação de mensagens copiadas de outros canais."""
 import re
 from html import escape
+from urllib.parse import urlparse
 from .compose import DISCLOSURE, short_title
 from .links import find_url, extract_asin, build_affiliate_link
 
@@ -8,6 +9,37 @@ from .links import find_url, extract_asin, build_affiliate_link
 USERNAME_RE = re.compile(r"@([a-zA-Z0-9_]{4,32})")
 TELEGRAM_LINK_RE = re.compile(r"https?://(?:t|telegram)\.me/[a-zA-Z0-9_+/]+")
 HTTP_LINK_RE = re.compile(r"https?://\S+")
+
+CLICKBAIT_RE = re.compile(
+    r"^(?:🔥|⚡|💥|✨|🎯|👉|🏷️|📢|\s)*(?:pre[cç]o\s+m[íi]nimo|m[íi]nimo\s+hist[óo]rico|super\s+desconto|grande\s+baixa|oportunidade|imperd[íi]vel|aproveita|chollazo|chollo|oferta|promo[cç][ãa]o)",
+    re.IGNORECASE,
+)
+
+
+def extract_product_title(raw_text: str, resolved_url: str | None = None) -> str:
+    """Extrai o nome real do produto ignorando chamadas genéricas como 'Preço mínimo histórico'."""
+    lines = [l.strip() for l in (raw_text or "").splitlines() if l.strip()]
+    for line in lines:
+        clean = line.strip(" -—•*~#🔥⚡💥🎯👉 ")
+        if not clean or clean.lower().startswith("http"):
+            continue
+        # Se for apenas uma frase de chamariz curta, ignora e procura a linha seguinte
+        if CLICKBAIT_RE.search(clean) and len(clean.split()) <= 5:
+            continue
+        return short_title(clean, 140)
+
+    # Fallback: extrai do slug do URL da Amazon (ex: amazon.es/Nome-Do-Produto/dp/ASIN)
+    if resolved_url:
+        parsed = urlparse(resolved_url)
+        if "/dp/" in parsed.path:
+            slug = parsed.path.split("/dp/")[0].strip("/")
+            if slug and not slug.startswith("gp"):
+                clean_slug = slug.replace("-", " ").strip()
+                if len(clean_slug) >= 5:
+                    return short_title(clean_slug, 140)
+
+    return "Oferta Especial"
+
 
 
 def extract_links_from_telethon_message(message) -> list[str]:

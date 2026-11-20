@@ -1,8 +1,9 @@
 FROM python:3.12-slim
 
-# Instala fontes DejaVu para que o Pillow crie os cartões de produto
+# Instala fontes DejaVu e Tesseract OCR para reconhecimento de preços na imagem
 RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-dejavu-core \
+    tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

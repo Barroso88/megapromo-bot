@@ -7,8 +7,8 @@ from pathlib import Path
 from telethon import TelegramClient, events
 
 from .card import make_card
-from .cleaner import clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message
-from .price_extractor import extract_prices_from_text
+from .cleaner import clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message, extract_product_title
+from .price_extractor import extract_prices
 from .compose import short_title
 from .config import ListenerConfig
 from .links import LinkError, build_affiliate_link, extract_asin
@@ -76,13 +76,8 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
     # Prepara o link com a tua tag de afiliado
     affiliate_link = build_affiliate_link(detected_asin, cfg.amazon_tag)
 
-    # Extrai o título e limpa o texto
-    lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
-    first_line = lines[0] if lines else "Oferta Amazon"
-    # Se a primeira linha contiver apenas o link, tenta a seguinte
-    if first_line.lower().startswith("http") and len(lines) > 1:
-        first_line = lines[1]
-    title = short_title(first_line, 120)
+    # Extrai o título real do produto ignorando chamadas genéricas
+    title = extract_product_title(raw_text, resolved_url=original_url)
 
     clean_body = clean_text_for_repost(raw_text, cfg.target_channel)
     caption = compose_repost_caption(
@@ -92,15 +87,16 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
         target_handle=cfg.target_channel,
     )
 
-    # Extrai preços antes e depois do texto da mensagem original
-    price_before, price_after = extract_prices_from_text(raw_text)
-
     # Processamento visual: tentar obter a foto e criar o cartão do canal
     card_bytes = None
     if message.photo:
         try:
             photo_data = await message.download_media(file=bytes)
             if photo_data:
+                # Extrai preços do texto OU da imagem via OCR!
+                price_before, price_after = extract_prices(raw_text, photo_bytes=photo_data)
+                logger.info("💰 Preços detetados: Antes=%s, Depois=%s", price_before, price_after)
+
                 card_bytes = make_card(
                     photo_data,
                     title,

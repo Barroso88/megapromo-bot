@@ -37,9 +37,11 @@ def test_card_with_prices_has_black_price_block():
     assert sum(img.getpixel((1000, 1060))) < 120     # bloco preto do preço
 
 
-def test_card_without_prices_has_no_black_block():
+def test_card_without_prices_has_black_block_with_oferta():
     img = Image.open(io.BytesIO(make_card(photo(), "Televisor", "", "@canal")))
-    assert sum(img.getpixel((1000, 1060))) > 400
+    assert img.size == (1080, 1080)
+    # O bloco de preço existe sempre garantindo o formato da referência
+    assert sum(img.getpixel((1000, 1060))) < 120
 
 
 def test_discount_percent():
