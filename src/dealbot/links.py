@@ -3,7 +3,7 @@ import re
 import urllib.error
 import urllib.request
 from typing import Callable
-from urllib.parse import urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 ASIN_RE = re.compile(r"^[A-Z0-9]{10}$")
 PATH_ASIN_RE = re.compile(r"/(?:dp|gp/product)/([A-Z0-9]{10})(?:[/?]|$)")
@@ -53,15 +53,45 @@ def _asin_from_amazon_es(url: str) -> str | None:
     return m.group(1) if m else None
 
 
-def extract_asin(url: str, resolve: Callable[[str], str] | None = None) -> str | None:
+def analyze_link(url: str, resolve: Callable[[str], str] | None = None) -> tuple[str | None, str | None]:
+    """(ASIN, endereço final da amazon.es) de um link direto ou curto; (None, None) se não for amazon.es."""
     host = (urlparse(url).hostname or "").lower()
+    final = url
     if host in SHORT_HOSTS:
         try:
             final = (resolve or _follow)(url)
         except Exception as e:  # rede, timeout, HTTP
             raise LinkError(f"não consegui abrir o link curto: {e}") from e
-        return _asin_from_amazon_es(final)
-    return _asin_from_amazon_es(url)
+    asin = _asin_from_amazon_es(final)
+    return (asin, final) if asin else (None, None)
+
+
+def extract_asin(url: str, resolve: Callable[[str], str] | None = None) -> str | None:
+    return analyze_link(url, resolve)[0]
+
+
+def title_from_url(url: str | None) -> str | None:
+    """Nome do produto escrito no endereço (amazon.es/<Nome-Do-Produto>/dp/<ASIN>), se existir."""
+    if not url:
+        return None
+    parsed = urlparse(url)
+    if (parsed.hostname or "").lower() not in AMAZON_HOSTS:
+        return None
+    segs = [unquote(p) for p in parsed.path.split("/") if p]
+    idx = None
+    for i, seg in enumerate(segs):
+        if seg == "dp":
+            idx = i
+            break
+        if seg == "product" and i > 0 and segs[i - 1] == "gp":
+            idx = i - 1
+            break
+    if not idx:                        # sem 'dp', ou nada antes dele
+        return None
+    text = segs[idx - 1].replace("-", " ").strip()
+    if len(text) < 4 or not any(c.isalpha() for c in text) or ASIN_RE.match(text.replace(" ", "")):
+        return None
+    return text
 
 
 def build_affiliate_link(asin: str, tag: str) -> str:

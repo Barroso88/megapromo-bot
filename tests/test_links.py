@@ -91,3 +91,31 @@ def test_follow_reads_location_without_fetching_target():
         assert _follow(f"http://127.0.0.1:{srv.server_port}/") == target
     finally:
         srv.shutdown()
+
+
+def test_analyze_link_returns_asin_and_final_url_for_direct_and_short_links():
+    from dealbot.links import analyze_link
+    direct = "https://www.amazon.es/Cecotec-Freidora-Cecofry/dp/B0B5VPLXRB?ref=x"
+    assert analyze_link(direct) == ("B0B5VPLXRB", direct)
+    final = "https://www.amazon.es/Marvels-Guardians-Galaxy-Nintendo-Switch/dp/B0HJH8BB6Y?th=1"
+    assert analyze_link("https://amzn.to/3xyz", resolve=lambda u: final) == ("B0HJH8BB6Y", final)
+    assert analyze_link("https://example.com/x") == (None, None)
+    assert analyze_link("https://amzn.to/3xyz", resolve=lambda u: "https://example.com/dp/B0B5VPLXRB") == (None, None)
+
+
+def test_title_from_url_reads_the_product_slug():
+    from dealbot.links import title_from_url
+    f = title_from_url
+    assert f("https://www.amazon.es/Cecotec-Freidora-Cecofry-Experience-Ventana/dp/B0B5VPLXRB") == \
+        "Cecotec Freidora Cecofry Experience Ventana"
+    assert f("https://www.amazon.es/Caf%C3%A9-Molido-Natural-500g/dp/B0B5VPLXRB?x=1") == "Café Molido Natural 500g"
+    assert f("https://www.amazon.es/-/en/Nintendo-Switch-Pro-Controller/dp/B0B5VPLXRB") == "Nintendo Switch Pro Controller"
+    assert f("https://www.amazon.es/Nombre-Producto/gp/product/B0B5VPLXRB") == "Nombre Producto"
+
+
+def test_title_from_url_without_a_slug_is_none():
+    from dealbot.links import title_from_url
+    for url in ("https://www.amazon.es/dp/B0B5VPLXRB", "https://www.amazon.es/gp/product/B0B5VPLXRB",
+                "https://www.amazon.es/dp/B0B5VPLXRB/?tag=x", "https://www.amazon.es/s/dp/B0B5VPLXRB",
+                "https://www.amazon.es/ab/dp/B0B5VPLXRB", "", None, "https://example.com/Nome-Produto/dp/B0B5VPLXRB"):
+        assert title_from_url(url) is None, url

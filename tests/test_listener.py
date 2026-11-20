@@ -279,3 +279,50 @@ def test_amazon_images_can_be_switched_off(tmp_path, monkeypatch):
     original, seen, calls = _photo_case(tmp_path, monkeypatch, jpeg(500, 500), amazon_images=False)
     assert calls == []
     assert Image.open(io.BytesIO(seen["photo"])).height < Image.open(io.BytesIO(original)).height - 60
+
+
+def _link_case(tmp_path, monkeypatch, text, final_url=None):
+    import dealbot.links as links
+    if final_url:
+        monkeypatch.setattr(links, "_follow", lambda url, max_hops=5: final_url)
+
+    async def _test():
+        client = MagicMock()
+        client.send_file, client.send_message = AsyncMock(), AsyncMock()
+        cfg = ListenerConfig(api_id=1, api_hash="h", amazon_tag="t-21", source_channels=["@f"],
+                             target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat="")
+        state, sf = State(published=[]), tmp_path / "state.json"
+        state.save(sf)
+        msg = SimpleNamespace(text=text, message=None, photo=None, media=None, reply_markup=None)
+        await process_incoming_message(client, msg, cfg, state, sf)
+        return client, state
+
+    return asyncio.run(_test())
+
+
+def test_title_comes_from_the_url_slug_of_a_short_link_when_text_has_no_name(tmp_path, monkeypatch):
+    final = "https://www.amazon.es/Marvels-Guardians-Galaxy-Nintendo-Switch/dp/B0HJH8BB6Y?th=1"
+    client, state = _link_case(
+        tmp_path, monkeypatch, "🔥 Preço mínimo histórico!\n❌ Antes: 40,65€\n✅ Agora: 33,53€\nhttps://amzn.to/3xyz", final)
+    client.send_message.assert_called()
+    caption = [c.args[1] for c in client.send_message.call_args_list if c.args[0] == "@meucanal"][0]
+    assert "Marvels Guardians Galaxy Nintendo Switch" in caption
+    assert "B0HJH8BB6Y" in state.published
+
+
+def test_slug_title_is_translated_and_wins_over_a_noisy_text_line(tmp_path, monkeypatch):
+    import dealbot.listener as listener
+    monkeypatch.setattr(listener, "to_pt", lambda t: f"PT[{t}]")
+    final = "https://www.amazon.es/Cecotec-Freidora-Cecofry/dp/B0B5VPLXRB"
+    client, _ = _link_case(
+        tmp_path, monkeypatch, "Linha qualquer do texto\n❌ Antes: 90€\n✅ Agora: 60€\nhttps://amzn.to/3xyz", final)
+    caption = [c.args[1] for c in client.send_message.call_args_list if c.args[0] == "@meucanal"][0]
+    assert "PT[Cecotec Freidora Cecofry]" in caption and "Linha qualquer" not in caption
+
+
+def test_link_without_slug_falls_back_to_the_text_name(tmp_path, monkeypatch):
+    final = "https://www.amazon.es/dp/B0B5VPLXRB?th=1"
+    client, _ = _link_case(
+        tmp_path, monkeypatch, "Cecotec Freidora Cecofry 5L\n❌ Antes: 90€\n✅ Agora: 60€\nhttps://amzn.to/3xyz", final)
+    caption = [c.args[1] for c in client.send_message.call_args_list if c.args[0] == "@meucanal"][0]
+    assert "Cecotec Freidora Cecofry 5L" in caption

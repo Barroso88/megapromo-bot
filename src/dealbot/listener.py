@@ -13,7 +13,8 @@ from .product_image import isolate_product
 from .price_extractor import extract_prices
 from .compose import short_title
 from .config import ListenerConfig
-from .links import LinkError, build_affiliate_link, extract_asin
+from .links import LinkError, analyze_link, build_affiliate_link, title_from_url
+from .translate import to_pt
 from .state import State
 from .web import save_deal_to_history, save_discard_to_history, start_web_server
 
@@ -66,12 +67,14 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
     # Procura um link da Amazon válido
     detected_asin = None
     original_url = None
+    resolved_url = None
     for url in urls:
         try:
-            asin = extract_asin(url)
+            asin, final_url = analyze_link(url)
             if asin:
                 detected_asin = asin
                 original_url = url
+                resolved_url = final_url
                 break
         except (LinkError, Exception) as e:
             logger.debug("Falha ao analisar url %s: %s", url, e)
@@ -102,11 +105,17 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
     # Prepara o link com a tua tag de afiliado
     affiliate_link = build_affiliate_link(detected_asin, cfg.amazon_tag)
 
-    # Extrai o título real do produto ignorando chamadas genéricas
-    title = extract_product_title(raw_text, resolved_url=original_url)
+    # Nome do produto: primeiro o que vem escrito no endereço da Amazon (traduzido); senão a linha certa do texto.
+    title = None
+    slug = title_from_url(resolved_url)
+    if slug:
+        title = short_title(await asyncio.to_thread(to_pt, slug), 140)
+    if not title:
+        title = extract_product_title(raw_text)
     if title == GENERIC_TITLE:
         await _audit_discard(client, cfg, source_display, detected_asin, original_url,
-                             "nome do produto não encontrado no texto", data_dir=state_file.parent, title="")
+                             "nome do produto não encontrado (nem no endereço nem no texto)",
+                             data_dir=state_file.parent, title="")
         return
 
     clean_body = clean_text_for_repost(raw_text, cfg.target_channel)
