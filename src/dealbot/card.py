@@ -128,8 +128,11 @@ def make_card(photo: bytes, title: str, category: str, handle: str,
     d.text(((S - d.textlength("MEGAPROMO", font=f)) / 2, 22), "MEGAPROMO", font=f, fill=WHITE)
 
     if LOGO.exists():
+        # Centrado no espaço livre à esquerda do selo de desconto (ou, sem selo, do bloco do preço)
+        has_badge = bool(price and old_price and discount(price, old_price))
+        free_right = 461 if has_badge else 553
         logo = Image.open(LOGO).convert("RGBA").resize((200, 200), Image.LANCZOS)
-        card.paste(logo, (50, S - 250), logo)
+        card.paste(logo, ((free_right - 200) // 2, 947 - 100), logo)
 
     card = _price_block(card, price or "OFERTA", old_price)
 

@@ -62,3 +62,9 @@ def test_small_photo_is_enlarged_to_fill_the_photo_area():
     img = Image.open(io.BytesIO(make_card(photo(150, 100), "x", "", "@canal")))
     assert img.getpixel((540, 360))[0] > 150       # centro da área da foto agora coberto pelo produto (vermelho)
     assert img.getpixel((300, 360))[0] > 150       # e também mais para os lados: a foto foi ampliada
+
+
+def test_logo_is_centered_in_the_free_space_left_of_the_discount_badge():
+    img = Image.open(io.BytesIO(make_card(photo(), "x", "", "@canal", price="17,77", old_price="25,40")))
+    assert sum(img.getpixel((230, 947))) < 400        # logótipo (escuro) no centro do espaço livre
+    assert sum(img.getpixel((40, 947))) > 600         # e já não encostado à esquerda
