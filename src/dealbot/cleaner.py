@@ -17,13 +17,50 @@ CLICKBAIT_RE = re.compile(
 )
 
 
+GENERIC_TITLE = "Oferta Especial"      # devolvido quando o texto não tem o nome do produto
+HEADLINE_WORDS = {
+    "mega", "super", "preço", "preco", "preços", "precos", "mínimo", "minimo", "histórico", "historico",
+    "excelente", "oferta", "ofertas", "desconto", "descontos", "imperdível", "imperdivel", "aproveita",
+    "bom", "bons", "grande", "grandes", "queda", "incrível", "incrivel", "black", "friday", "deal",
+    "promo", "promoção", "promocao", "agora", "só", "apenas", "urgente", "corre", "flash", "relâmpago",
+    "relampago", "erro", "últimas", "ultimas", "chollo", "chollazo", "oportunidade", "baixa",
+}
+STOPWORDS = {"de", "do", "da", "dos", "das", "a", "o", "as", "os", "e", "em", "na", "no", "com", "por", "para", "um", "uma"}
+INSTRUCTION_RE = re.compile(
+    r"subscreva|poupe|cancel[aá]vel|\bseleciona|cup[aã]o|c[oó]digo|\baplica\b|\bclica|\bativa\b|resgata|vendido por|enviado por",
+    re.IGNORECASE,
+)
+
+
+LABEL_LINE_RE = re.compile(r"^(antes|agora|pvp|pre[cç]o|link|url|cup[aã]o|c[oó]digo)\b", re.IGNORECASE)
+PRICE_RE_TITLE = re.compile(r"[\d.,]+\s*€|€\s*[\d.,]+")
+
+
+def is_headline(text: str) -> bool:
+    """'🤯 -48%! MEGA preço! Mínimo histórico!': frase de chamariz, não o nome de um produto."""
+    tokens = re.findall(r"\d+\s*%|[^\W\d_]+", text.lower())
+    words = [t for t in tokens if t not in STOPWORDS]
+    if not words:
+        return True
+    hits = sum(1 for t in words if t in HEADLINE_WORDS or t.endswith("%"))
+    return hits / len(words) >= 0.6
+
+
 def extract_product_title(raw_text: str, resolved_url: str | None = None) -> str:
     """Extrai o nome real do produto ignorando chamadas genéricas como 'Preço mínimo histórico'."""
     lines = [l.strip() for l in (raw_text or "").splitlines() if l.strip()]
     for line in lines:
         line = MARKDOWN_RE.sub("", line)                      # **negrito**, __itálico__, `código`, ~~riscado~~
-        clean = line.strip(" -—•*~#🔥⚡💥🎯👉 ")
+        clean = re.sub(r"^[^\w€]+", "", line).strip(" -—•*~#")   # tira emojis e símbolos do início
         if not clean or clean.lower().startswith("http"):
+            continue
+        if LABEL_LINE_RE.search(clean):
+            continue
+        if "€" in clean:                                      # "Gafas Hawkers 25,40€" -> "Gafas Hawkers"
+            clean = PRICE_RE_TITLE.sub("", clean).strip(" -—•*~#[]()")
+            if len(re.findall(r"[^\W\d_]+", clean)) < 2:
+                continue
+        if is_headline(clean) or INSTRUCTION_RE.search(clean):
             continue
         # Frases de chamariz ("32%! Excelente preço! Mínimo histórico!") não são o nome do produto
         if CLICKBAIT_RE.search(clean) and len(clean.split()) <= 8:
@@ -40,7 +77,7 @@ def extract_product_title(raw_text: str, resolved_url: str | None = None) -> str
                 if len(clean_slug) >= 5:
                     return short_title(clean_slug, 140)
 
-    return "Oferta Especial"
+    return GENERIC_TITLE
 
 
 

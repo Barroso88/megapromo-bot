@@ -61,3 +61,31 @@ def test_title_strips_markdown_markers():
 def test_only_headlines_give_generic_title():
     from dealbot.cleaner import extract_product_title
     assert extract_product_title("🔥 32%! Excelente preço! __Mínimo histórico!__ Aproveita já\nhttps://x") == "Oferta Especial"
+
+
+def test_title_skips_emoji_and_dash_percent_headline():
+    from dealbot.cleaner import extract_product_title
+    text = "🤯 -48%! MEGA preço! Mínimo histórico!\nPolly Pocket Friends Central Perk Collector\nhttps://x"
+    assert extract_product_title(text) == "Polly Pocket Friends Central Perk Collector"
+    assert extract_product_title("🤯 -48%! MEGA preço! Mínimo histórico!\nhttps://x") == "Oferta Especial"
+
+
+def test_title_skips_instruction_lines():
+    from dealbot.cleaner import extract_product_title
+    text = 'Seleciona "Subscreva e Poupe" (cancelável a qualquer altura)\nSabão Skip Ultimate 50 doses\nhttps://x'
+    assert extract_product_title(text) == "Sabão Skip Ultimate 50 doses"
+    assert extract_product_title('Seleciona "Subscreva e Poupe" (cancelável a qualquer altura)\nhttps://x') == "Oferta Especial"
+
+
+def test_real_product_names_are_not_mistaken_for_headlines():
+    from dealbot.cleaner import extract_product_title
+    for name in ("roborock Saros 10R Aspirador 22 000 Pa 7,98 cm preto", "Samsung Galaxy S24 Ultra 256GB",
+                 "Super Mario Bros Wonder Nintendo Switch", "Bola adidas Real Madrid Home Club"):
+        assert extract_product_title(f"🔥 -30%! Mínimo histórico!\n{name}\nhttps://x") == name
+
+
+def test_price_and_link_lines_are_never_the_title():
+    from dealbot.cleaner import extract_product_title
+    text = "❌ Antes: 60,98€\n✅ Agora: 32,00€\n[ 28€ desconto ]\n💥 Link: https://x\nLego Friends Central Perk"
+    assert extract_product_title(text) == "Lego Friends Central Perk"
+    assert extract_product_title("❌ Antes: 60,98€\n✅ Agora: 32,00€\nhttps://x") == "Oferta Especial"

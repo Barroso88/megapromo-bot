@@ -7,7 +7,7 @@ from pathlib import Path
 from telethon import TelegramClient, events
 
 from .card import make_card
-from .cleaner import clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message, extract_product_title
+from .cleaner import GENERIC_TITLE, clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message, extract_product_title
 from .product_image import isolate_product
 from .price_extractor import extract_prices
 from .compose import short_title
@@ -103,6 +103,10 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
 
     # Extrai o título real do produto ignorando chamadas genéricas
     title = extract_product_title(raw_text, resolved_url=original_url)
+    if title == GENERIC_TITLE:
+        await _audit_discard(client, cfg, source_display, detected_asin, original_url,
+                             "nome do produto não encontrado no texto", data_dir=state_file.parent, title="")
+        return
 
     clean_body = clean_text_for_repost(raw_text, cfg.target_channel)
     caption = compose_repost_caption(

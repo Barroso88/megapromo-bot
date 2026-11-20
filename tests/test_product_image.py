@@ -93,3 +93,40 @@ def test_price_text_above_the_colored_block_is_cut_even_if_ocr_cannot_read_it():
     out = Image.open(io.BytesIO(isolate_product(buf.getvalue())))
     assert out.height < 215                       # o retângulo cinzento (preço) já não está no recorte
     assert not has_orange(out)
+
+
+def has_blue(im: Image.Image) -> bool:
+    raw = im.convert("RGB").resize((120, max(1, int(120 * im.height / im.width)))).tobytes()
+    return any(raw[i + 2] > 180 and raw[i] < 120 and raw[i + 1] < 120 for i in range(0, len(raw), 3))
+
+
+@needs_ocr
+def test_brand_bar_at_the_top_of_the_photo_is_removed():
+    # Como o "dezcontos": barra azul do canal de origem no topo, produto por baixo, faixa de preço em baixo.
+    im = Image.new("RGB", (600, 500), (255, 255, 255))
+    d = ImageDraw.Draw(im)
+    d.rectangle((30, 20, 570, 60), fill=(60, 60, 240))
+    d.ellipse((170, 110, 430, 290), fill=(30, 40, 60))
+    d.polygon([(0, 500), (0, 360), (300, 345), (600, 335), (600, 500)], fill=(244, 244, 247))
+    d.rounded_rectangle((300, 390, 600, 460), radius=24, fill=(240, 100, 20))
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=95)
+    out = Image.open(io.BytesIO(isolate_product(buf.getvalue())))
+    assert not has_blue(out) and not has_orange(out)
+    assert dark_ratio(out) > 0.3
+
+
+@needs_ocr
+def test_product_cut_by_the_price_band_fades_out_instead_of_a_hard_edge():
+    im = Image.new("RGB", (600, 400), (255, 255, 255))
+    d = ImageDraw.Draw(im)
+    d.rectangle((150, 30, 450, 330), fill=(30, 40, 60))          # produto que continua por baixo da faixa
+    d.rectangle((0, 262, 600, 400), fill=(244, 244, 247))        # faixa de preço tapa a parte de baixo
+    d.rounded_rectangle((300, 300, 600, 380), radius=24, fill=(240, 100, 20))
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=95)
+    out = Image.open(io.BytesIO(isolate_product(buf.getvalue()))).convert("L")
+    col = [out.getpixel((out.width // 2, y)) for y in range(out.height)]
+    lower_half = col[len(col) // 2:]
+    assert max(abs(a - b) for a, b in zip(lower_half, lower_half[1:])) < 60     # sem corte seco: passa a branco aos poucos
+    assert min(lower_half) < 100 and lower_half[-1] > 235                       # mas o produto continua lá em cima

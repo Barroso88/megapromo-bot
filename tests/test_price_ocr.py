@@ -89,7 +89,7 @@ def test_listener_card_shows_discount_badge_computed_from_image_prices(tmp_path)
                              target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat="")
         state, sf = State(published=[]), tmp_path / "state.json"
         state.save(sf)
-        msg = SimpleNamespace(text="🔥 30%! Excelente preço!\nhttps://www.amazon.es/dp/B09NYDLHYZ",
+        msg = SimpleNamespace(text="🔥 30%! Excelente preço!\nGafas Hawkers polarizadas\nhttps://www.amazon.es/dp/B09NYDLHYZ",
                               message=None, photo=object(), media=object(), reply_markup=None,
                               download_media=AsyncMock(return_value=banner()))
         await process_incoming_message(client, msg, cfg, state, sf)

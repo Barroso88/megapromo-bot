@@ -204,3 +204,12 @@ def test_discarded_offer_is_recorded_for_the_dashboard(tmp_path):
     items = json.loads((tmp_path / "discarded.json").read_text())
     assert items[0]["asin"] == "B09NYDLHYZ" and "preços" in items[0]["reason"]
     assert items[0]["title"].startswith("Gafas Hawkers")
+
+
+def test_post_without_a_product_name_is_not_published(tmp_path):
+    import json
+    client, state = _discard_case(
+        tmp_path, "🤯 -48%! MEGA preço! Mínimo histórico!\n❌ Antes: 60,98€\n✅ Agora: 32,00€\nhttps://www.amazon.es/dp/B0BLJSTSGT")
+    assert not any(c.args and c.args[0] == "@meucanal" for c in client.send_message.call_args_list)
+    assert "B0BLJSTSGT" not in state.published
+    assert "nome" in json.loads((tmp_path / "discarded.json").read_text())[0]["reason"]

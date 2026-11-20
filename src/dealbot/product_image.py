@@ -32,6 +32,38 @@ def _colored_block_top(im: Image.Image) -> int | None:
     return h // 2 + box[1]
 
 
+def _brand_bar_bottom(im: Image.Image) -> int | None:
+    """Fundo de uma barra de marca colorida e larga no topo (ex: a faixa azul do canal de origem), se existir."""
+    w, h = im.size
+    up = im.crop((0, 0, w, int(h * 0.35)))
+    _, sat, val = up.convert("HSV").split()
+    mask = ImageChops.multiply(sat.point(lambda p: 255 if p > 110 else 0), val.point(lambda p: 255 if p > 100 else 0))
+    k = max(3, (w // 60) | 1)
+    box = mask.filter(ImageFilter.MinFilter(k)).getbbox()
+    if not box:
+        return None
+    box = (max(box[0] - k // 2, 0), max(box[1] - k // 2, 0), min(box[2] + k // 2, w), min(box[3] + k // 2, up.height))
+    bw, bh = box[2] - box[0], box[3] - box[1]
+    if bw < 0.5 * w or bh > 0.25 * h or box[1] > 0.2 * h:
+        return None
+    if mask.crop(box).histogram()[255] / (bw * bh) < 0.6:     # preenchida, não um produto colorido
+        return None
+    return box[3] + 2
+
+
+def _fade_bottom(img: Image.Image, y_end: int, length: int) -> Image.Image:
+    """Esbate para branco as últimas `length` linhas do produto (até y_end): disfarça o corte seco."""
+    w, h = img.size
+    mask = Image.new("L", (w, h), 0)
+    start = max(0, y_end - length)
+    for y in range(start, h):
+        alpha = 255 if y >= y_end else int(255 * (y - start) / max(1, length))
+        mask.paste(alpha, (0, y, w, y + 1))
+    out = img.copy()
+    out.paste(Image.new("RGB", (w, h), (255, 255, 255)), (0, 0), mask)
+    return out
+
+
 def _overlay_text_limits(im: Image.Image) -> tuple[int, int]:
     """(topo, base) da zona útil, segundo o texto de sobreposição lido por OCR (palavras na faixa de cima/baixo)."""
     w, h = im.size
@@ -108,7 +140,11 @@ def isolate_product(photo: bytes) -> bytes:
     block = _colored_block_top(im)
     if block is not None:
         bottom = min(bottom, block)
+    bar = _brand_bar_bottom(im)
+    if bar is not None:
+        top = max(top, bar)
     overlay_found = top > 0 or bottom < h
+    cut_below = bottom < h
     if bottom - top < MIN_KEEP * h:
         return photo
     region = im.crop((0, top, w, bottom))
@@ -125,6 +161,12 @@ def isolate_product(photo: bytes) -> bytes:
     box = mask.filter(ImageFilter.MinFilter(3)).getbbox()
     if not box or (box[2] - box[0]) * (box[3] - box[1]) < 0.04 * region.width * region.height:
         return _encode(region) if overlay_found else photo
+    ink_box = box
+    # Se o produto acaba numa linha reta e larga, foi a faixa de preço que o tapou: esbate em vez de deixar o corte seco.
+    flat_cut = cut_below and mask.crop((box[0], box[3] - 3, box[2], box[3])).histogram()[255] >= 1.5 * (box[2] - box[0])
     pad = int(0.06 * max(box[2] - box[0], box[3] - box[1]))
     box = (max(box[0] - pad, 0), max(box[1] - pad, 0), min(box[2] + pad, region.width), min(box[3] + pad, region.height))
-    return _encode(region.crop(box))
+    out = region.crop(box)
+    if flat_cut:
+        out = _fade_bottom(out, ink_box[3] - box[1], max(12, int(0.14 * (ink_box[3] - ink_box[1]))))
+    return _encode(out)
