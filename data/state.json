@@ -1,5 +1,5 @@
 {
- "offset": 249577825,
+ "offset": 249577925,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -24,7 +24,10 @@
   "https://www.chollometro.com/ofertas/playmobil-junior-tren-de-animales-tren-colorido-con-animales-4-vagones-y-cabina-de-conductor-2081232",
   "https://www.chollometro.com/ofertas/garmin-instinct-e-45-mm-reloj-deportivo-gps-resistente-con-hasta-16-dias-de-autonomia-2082433",
   "https://www.chollometro.com/ofertas/juguetero-con-ruedas-135l-organizador-de-juguetes-grande-rosa-2082427",
-  "https://www.chollometro.com/ofertas/helly-hansen-ahiga-slip-on-zapatillas-hombre-2082424"
+  "https://www.chollometro.com/ofertas/helly-hansen-ahiga-slip-on-zapatillas-hombre-2082424",
+  "https://www.chollometro.com/ofertas/beats-pill-altavoz-bluetooth-portatil-24-horas-de-bateria-resistencia-ip67-y-compatible-con-apple-y-android-3-colores-2083016",
+  "https://www.chollometro.com/ofertas/microfono-gaming-inalambrico-para-pc-microfono-dinamico-usb-con-brazo-3-niveles-de-reduccion-de-ruido-rgb-boton-mute-eq-2083012",
+  "https://www.chollometro.com/ofertas/gigabyte-g25f2-monitor-gaming-245-fhd-1920-x-1080-200hz-1ms-300-cdm2-displayhdr-10-hdmi-20-displayport-14-2083010"
  ],
  "pending": {
   "3": {
@@ -158,6 +161,24 @@
    "category": "Moda y accesorios",
    "price": "34€",
    "image": "https://static.chollometro.com/threads/raw/bYtly/2082424_1/re/150x150/qt/55/2082424_1.jpg"
+  },
+  "31": {
+   "title": "Beats Pill Altavoz Bluetooth portátil, 24 horas de batería, resistencia IP67 y compatible con Apple y Android (3 colores)",
+   "category": "Electrónica",
+   "price": "95€",
+   "image": "https://static.chollometro.com/threads/raw/mxMOl/2083016_1/re/150x150/qt/55/2083016_1.jpg"
+  },
+  "32": {
+   "title": "Micrófono Gaming Inalámbrico para PC, Micrófono Dinámico USB con Brazo, 3 Niveles de Reducción de Ruido, RGB, Botón Mute & EQ",
+   "category": "Electrónica",
+   "price": "52,91€",
+   "image": "https://static.chollometro.com/threads/raw/4dZ5n/2083012_1/re/150x150/qt/55/2083012_1.jpg"
+  },
+  "33": {
+   "title": "GIGABYTE G25F2 Monitor Gaming 24,5\" FHD – 1920 x 1080, 200Hz, 1ms, 300 CD/m², DisplayHDR 10, HDMI 2.0, DisplayPort 1.4",
+   "category": "Electrónica",
+   "price": "89,99€",
+   "image": "https://static.chollometro.com/threads/raw/nljKC/2083010_1/re/150x150/qt/55/2083010_1.jpg"
   }
  },
  "published": [
