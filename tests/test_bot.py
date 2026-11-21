@@ -261,3 +261,21 @@ def test_listener_config_price_flags(monkeypatch):
     assert ListenerConfig.from_env().require_prices is True
     monkeypatch.setenv("SHOW_PRICES", "0")
     assert ListenerConfig.from_env().show_prices is False
+
+
+def test_target_channel_accepts_a_numeric_id_and_keeps_usernames(monkeypatch):
+    from dealbot.config import ListenerConfig
+    base = {"TELEGRAM_API_ID": "1", "TELEGRAM_API_HASH": "h", "AMAZON_TAG": "t-21", "SOURCE_CHANNELS": "@a"}
+    for k, v in base.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.delenv("TARGET_HANDLE", raising=False)
+    monkeypatch.setenv("TARGET_CHANNEL", " -1004462166713 ")
+    cfg = ListenerConfig.from_env()
+    assert cfg.target_channel == -1004462166713 and isinstance(cfg.target_channel, int)
+    assert cfg.display_handle == "MegaPromo"                         # um número não se mostra nos cartões
+    monkeypatch.setenv("TARGET_HANDLE", "@megapromo_novo")
+    assert ListenerConfig.from_env().display_handle == "@megapromo_novo"
+    monkeypatch.setenv("TARGET_CHANNEL", "@megapromo_pt")
+    monkeypatch.delenv("TARGET_HANDLE")
+    cfg = ListenerConfig.from_env()
+    assert cfg.target_channel == "@megapromo_pt" and cfg.display_handle == "@megapromo_pt"

@@ -492,3 +492,46 @@ def test_duplicate_offers_are_recorded_once_in_the_dashboard_and_still_reported_
     assert len(items) == 1 and items[0]["asin"] == "B0DWDH32M8" and "já publicado" in items[0]["reason"]
     assert client.send_message.call_count == 3                       # o aviso no Telegram continua a sair sempre
     assert not any(c.args[0] == "@meucanal" for c in client.send_message.call_args_list)
+
+
+def _publish_case(tmp_path, monkeypatch, send_error=None, status=None):
+    """Post completo com preços no texto; send_message/send_file para o canal falham se send_error."""
+    import dealbot.links as links  # noqa: F401  (garante que não há rede)
+
+    async def _test():
+        client = MagicMock()
+        client.send_file = AsyncMock(side_effect=send_error)
+        client.send_message = AsyncMock(side_effect=send_error)
+        cfg = ListenerConfig(api_id=1, api_hash="h", amazon_tag="t-21", source_channels=["@f"],
+                             target_channel="@meucanal", session_path=str(tmp_path / "s"), audit_chat="")
+        state, sf = State(published=[]), tmp_path / "state.json"
+        state.save(sf)
+        msg = SimpleNamespace(
+            text="Aspirador Xiaomi sem fios\n❌ Antes: 129€\n✅ Agora: 89€\nhttps://www.amazon.es/dp/B0DWDH32M8",
+            message=None, photo=None, media=None, reply_markup=None)
+        await process_incoming_message(client, msg, cfg, state, sf, status=status)
+        return state
+
+    return asyncio.run(_test())
+
+
+def test_a_failed_publication_is_recorded_not_lost(tmp_path, monkeypatch):
+    import json
+    from dealbot.monitor_status import Status
+    st = Status(tmp_path / "status.json")
+    state = _publish_case(tmp_path, monkeypatch, send_error=ValueError('No user has "meucanal" as username'), status=st)
+    assert "B0DWDH32M8" not in state.published                       # não fica marcado: pode ser tentado de novo
+    items = json.loads((tmp_path / "discarded.json").read_text())
+    assert items[0]["reason"].startswith("erro ao publicar") and "No user has" in items[0]["reason"]
+    assert items[0]["asin"] == "B0DWDH32M8"
+    assert "No user has" in st.data["last_publish_error"] and st.data["last_publish_error_at"]
+    assert json.loads((tmp_path / "status.json").read_text())["last_publish_error"]
+
+
+def test_a_successful_publication_clears_the_error_and_records_the_time(tmp_path, monkeypatch):
+    from dealbot.monitor_status import Status
+    st = Status(tmp_path / "status.json")
+    st.set(last_publish_error="antigo", last_publish_error_at="2026-11-20T00:00:00")
+    state = _publish_case(tmp_path, monkeypatch, status=st)
+    assert "B0DWDH32M8" in state.published
+    assert st.data["last_publish_error"] is None and st.data["last_publish_at"] and st.data["published_total"] == 1

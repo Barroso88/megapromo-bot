@@ -141,3 +141,7 @@ def test_status_endpoint_reports_the_monitor_state_and_a_server_clock(server):
 def test_dashboard_status_label_is_dynamic_not_hardcoded():
     assert "Monitor Ativo" not in HTML_TEMPLATE
     assert "monitor-status" in HTML_TEMPLATE and "/api/status" in HTML_TEMPLATE
+
+
+def test_dashboard_shows_publish_and_target_errors():
+    assert "last_publish_error" in HTML_TEMPLATE and "target_error" in HTML_TEMPLATE

@@ -57,3 +57,42 @@ def test_watchdog_never_raises_and_reports_disconnected(tmp_path):
     st, client = Status(tmp_path / "s.json"), FakeClient(connected=False, fail_connect=True)
     asyncio.run(watchdog_tick(client, st, do_catch_up=True))             # não pode rebentar
     assert st.data["connected"] is False and st.data["last_error"]
+
+
+class _TargetClient:
+    def __init__(self, entity_error=None, dialogs_error=None):
+        self.entity_error, self.dialogs_error, self.calls = entity_error, dialogs_error, []
+
+    async def get_dialogs(self, limit=None):
+        self.calls.append("dialogs")
+        if self.dialogs_error:
+            raise self.dialogs_error
+
+    async def get_entity(self, target):
+        self.calls.append(("entity", target))
+        if self.entity_error:
+            raise self.entity_error
+        return type("E", (), {"title": "MegaPromo", "username": "megapromo_pt"})()
+
+
+def test_check_target_ok_records_the_channel_title(tmp_path):
+    from dealbot.monitor_status import check_target
+    st, client = Status(tmp_path / "s.json"), _TargetClient()
+    assert asyncio.run(check_target(client, "@megapromo_pt", st)) is True
+    assert st.data["target_error"] is None and st.data["target_title"] == "MegaPromo"
+    assert client.calls[0] == "dialogs"                                   # preenche a cache (necessário para IDs numéricos)
+
+
+def test_check_target_reports_an_unreachable_channel(tmp_path):
+    from dealbot.monitor_status import check_target
+    st = Status(tmp_path / "s.json")
+    client = _TargetClient(entity_error=ValueError('No user has "megapromo_pt" as username'))
+    assert asyncio.run(check_target(client, "@megapromo_pt", st)) is False
+    assert "No user has" in st.data["target_error"]
+    assert json.loads((tmp_path / "s.json").read_text())["target_error"]
+
+
+def test_check_target_survives_a_failing_dialog_listing(tmp_path):
+    from dealbot.monitor_status import check_target
+    st = Status(tmp_path / "s.json")
+    assert asyncio.run(check_target(_TargetClient(dialogs_error=OSError("rede")), "@x", st)) is True

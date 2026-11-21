@@ -21,6 +21,8 @@ class Status:
         self.data = {
             "started_at": _now(), "last_event_at": None, "last_event_source": None, "events_total": 0,
             "connected": None, "reconnects": 0, "last_catch_up_at": None, "last_error": None,
+            "target_error": None, "target_title": None, "last_publish_at": None, "last_publish_error": None,
+            "last_publish_error_at": None, "published_total": 0,
         }
 
     def event(self, source: str) -> None:
@@ -43,6 +45,26 @@ class Status:
             os.replace(tmp, self.path)
         except OSError as e:
             logger.warning("Não foi possível guardar o estado do monitor: %s", e)
+
+
+async def check_target(client, target, status: Status) -> bool:
+    """Confirma que o canal de destino existe e está acessível a esta conta; regista o resultado no estado."""
+    try:
+        await client.get_dialogs(limit=None)             # preenche a cache de entidades (necessária para IDs numéricos)
+    except Exception as e:
+        logger.warning("Não foi possível listar os diálogos: %s: %s", type(e).__name__, e)
+    ok = True
+    try:
+        entity = await client.get_entity(target)
+        title = getattr(entity, "title", None) or getattr(entity, "username", None)
+        status.set(target_error=None, target_title=title)
+        logger.info("✅ Canal de destino acessível: %s (%s)", target, title)
+    except Exception as e:
+        ok = False
+        status.set(target_error=f"{type(e).__name__}: {e}", target_title=None)
+        logger.error("❌ Canal de destino INACESSÍVEL (%r): %s. Nada será publicado até corrigires TARGET_CHANNEL.", target, e)
+    status.save()
+    return ok
 
 
 async def watchdog_tick(client, status: Status, do_catch_up: bool = False) -> None:

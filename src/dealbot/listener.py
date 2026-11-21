@@ -16,7 +16,7 @@ from .compose import short_title
 from .config import ListenerConfig
 from .links import LinkError, analyze_link, build_affiliate_link, title_from_url
 from .translate import to_pt
-from .monitor_status import Status, watchdog_loop
+from .monitor_status import Status, check_target, watchdog_loop
 from .state import State
 from .web import save_deal_to_history, save_discard_to_history, start_web_server
 
@@ -49,6 +49,11 @@ async def _audit_discard(client, cfg: ListenerConfig, source: str, asin: str, ur
         pass
 
 
+def _now_iso() -> str:
+    from datetime import datetime
+    return datetime.now().isoformat(timespec="seconds")
+
+
 def _first_line(text: str, limit: int = 120) -> str:
     for line in (text or "").splitlines():
         if line.strip():
@@ -62,17 +67,19 @@ def _record_drop(state_file: Path, source: str, text: str, url: str, reason: str
     save_discard_to_history(state_file.parent, "", _first_line(text), source, url or "", reason, excerpt=text)
 
 
-async def handle_message_safely(client, message, cfg: ListenerConfig, state: State, state_file: Path) -> None:
+async def handle_message_safely(client, message, cfg: ListenerConfig, state: State, state_file: Path,
+                                status: Status | None = None) -> None:
     """Processa uma mensagem; qualquer erro fica registado no painel em vez de se perder nos logs."""
     try:
-        await process_incoming_message(client, message, cfg, state, state_file)
+        await process_incoming_message(client, message, cfg, state, state_file, status=status)
     except Exception as e:
         logger.error("Erro inesperado no handler de mensagens: %s", e)
         text = getattr(message, "raw_text", None) or getattr(message, "text", "") or ""
         _record_drop(state_file, "?", text, "", f"erro inesperado: {type(e).__name__}: {e}")
 
 
-async def process_incoming_message(client: TelegramClient, message, cfg: ListenerConfig, state: State, state_file: Path):
+async def process_incoming_message(client: TelegramClient, message, cfg: ListenerConfig, state: State, state_file: Path,
+                                   status: Status | None = None):
     """Processa uma mensagem recebida de um dos canais monitorizados."""
     urls = extract_links_from_telethon_message(message)
     if not urls:
@@ -155,12 +162,12 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
                              data_dir=state_file.parent, title="")
         return
 
-    clean_body = clean_text_for_repost(raw_text, cfg.target_channel)
+    clean_body = clean_text_for_repost(raw_text, cfg.display_handle)
     caption = compose_repost_caption(
         title=title,
         clean_body=clean_body,
         affiliate_link=affiliate_link,
-        target_handle=cfg.target_channel,
+        target_handle=cfg.display_handle,
     )
 
     # Os preços (texto ou OCR da imagem) só entram no cartão se os DOIS forem lidos. Por defeito a oferta sai na mesma
@@ -203,7 +210,7 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
                 product_photo,
                 title,
                 "",
-                cfg.target_channel,
+                cfg.display_handle,
                 price=price_after,
                 old_price=price_before,
             )
@@ -228,6 +235,22 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
         else:
             await client.send_message(cfg.target_channel, caption, parse_mode="html", link_preview=True)
 
+    except Exception as e:
+        logger.error("❌ Erro ao publicar mensagem no canal de destino: %s", e)
+        if status is not None:
+            status.set(last_publish_error=f"{type(e).__name__}: {e}", last_publish_error_at=_now_iso())
+            status.save()
+        await _audit_discard(client, cfg, source_display, detected_asin, original_url,
+                             f"erro ao publicar: {type(e).__name__}: {e}",
+                             data_dir=state_file.parent, title=title,
+                             price_before=price_before, price_after=price_after)
+        return
+
+    if status is not None:
+        status.set(last_publish_at=_now_iso(), last_publish_error=None)
+        status.bump("published_total")
+        status.save()
+    try:
         logger.info("✅ Publicado com sucesso no canal %s!", cfg.target_channel)
 
         # Envia relatório visual de auditoria para o teu chat privado ou grupo de controlo
@@ -269,7 +292,7 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
             card_bytes=card_bytes,
         )
     except Exception as e:
-        logger.error("❌ Erro ao publicar mensagem no canal de destino: %s", e)
+        logger.error("Erro após publicar (a oferta já foi publicada): %s", e)
 
 
 async def start_listener(cfg: ListenerConfig):
@@ -297,6 +320,7 @@ async def start_listener(cfg: ListenerConfig):
     logger.info("🚀 Telethon ligado com sucesso! A validar canais configurados...")
     status.set(connected=True)
     status.save()
+    await check_target(client, cfg.target_channel, status)
     watchdog = asyncio.create_task(watchdog_loop(client, status))      # reconecta e pede as mensagens em falta
 
     valid_chats = []
@@ -319,7 +343,7 @@ async def start_listener(cfg: ListenerConfig):
                 chat = getattr(event, "chat", None)
                 status.event(f"@{chat.username}" if getattr(chat, "username", None) else getattr(chat, "title", "?"))
                 status.save()
-                await handle_message_safely(client, event.message, cfg, state, state_file)
+                await handle_message_safely(client, event.message, cfg, state, state_file, status)
             except Exception as e:
                 logger.error("Erro inesperado no handler de mensagens: %s", e)
 

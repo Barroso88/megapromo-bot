@@ -12,6 +12,7 @@ services:
       - TELEGRAM_API_HASH=73f860a71855ab034e248b7cdcbfc681
       - AMAZON_TAG=megapromopt-21
       - SOURCE_CHANNELS=@descontosAinanas,@bibliamtengarsada,@cupoesestafixe,@cupoes
-      - TARGET_CHANNEL=@megapromo_pt
+      - TARGET_CHANNEL=-1004462166713
+      - TARGET_HANDLE=MegaPromo
       - AUDIT_CHAT=me
       - TELEGRAM_SESSION_PATH=/app/data/dealbot.session

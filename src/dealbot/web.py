@@ -169,6 +169,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             try {
                 const st = await (await fetch('/api/status')).json();
                 if (st.state === 'unknown') return set('bg-gray-500', 'Estado desconhecido (monitor antigo?)');
+                if (st.target_error) return set('bg-red-500', 'Canal de destino inacessível · ' + st.target_error);
+                if (st.last_publish_error && (!st.last_publish_at || st.last_publish_error_at >= st.last_publish_at))
+                    return set('bg-red-500', 'Erro ao publicar · ' + st.last_publish_error);
                 if (st.connected === false) return set('bg-red-500', 'Desligado do Telegram' + (st.last_error ? ` · ${st.last_error}` : ''));
                 if (!st.last_event_at) return set('bg-amber-500', 'Ligado · à espera da primeira mensagem');
                 const min = (new Date(st.now) - new Date(st.last_event_at)) / 60000;

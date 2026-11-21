@@ -1,4 +1,5 @@
 import os
+import re
 from dataclasses import dataclass
 
 REQUIRED = ("TELEGRAM_BOT_TOKEN", "OWNER_CHAT_ID", "CHANNEL_ID", "AMAZON_TAG")
@@ -20,6 +21,12 @@ class Config:
         return cls(e["TELEGRAM_BOT_TOKEN"], e["OWNER_CHAT_ID"], e["CHANNEL_ID"], e["AMAZON_TAG"])
 
 
+def _peer(value: str) -> str | int:
+    """'@canal' fica texto; '-1004462166713' passa a inteiro (o Telethon só o aceita assim)."""
+    value = value.strip()
+    return int(value) if re.fullmatch(r"-?\d+", value) else value
+
+
 LISTENER_REQUIRED = ("TELEGRAM_API_ID", "TELEGRAM_API_HASH", "AMAZON_TAG", "SOURCE_CHANNELS", "TARGET_CHANNEL")
 
 
@@ -29,12 +36,21 @@ class ListenerConfig:
     api_hash: str
     amazon_tag: str
     source_channels: list[str]
-    target_channel: str
+    target_channel: str | int       # @username ou ID numérico (ex: -1004462166713), que não muda se o nome mudar
     session_path: str = "data/dealbot.session"
     audit_chat: str = "me"
+    target_handle: str = ""         # nome a mostrar nos cartões (TARGET_HANDLE); por defeito o @ do canal
     show_prices: bool = True        # ler (OCR/texto) e mostrar os preços no cartão, quando legíveis
     require_prices: bool = True     # só publica com os dois preços lidos; REQUIRE_PRICES=0 publica também sem preços
     amazon_images: bool = True      # imagem oficial por ASIN primeiro; o recorte da foto do canal é o plano B
+
+    @property
+    def display_handle(self) -> str:
+        if self.target_handle:
+            return self.target_handle
+        if isinstance(self.target_channel, str) and self.target_channel.startswith("@"):
+            return self.target_channel
+        return "MegaPromo"
 
     @classmethod
     def from_env(cls) -> "ListenerConfig":
@@ -54,7 +70,8 @@ class ListenerConfig:
             api_hash=os.environ["TELEGRAM_API_HASH"].strip(),
             amazon_tag=os.environ["AMAZON_TAG"].strip(),
             source_channels=sources,
-            target_channel=os.environ["TARGET_CHANNEL"].strip(),
+            target_channel=_peer(os.environ["TARGET_CHANNEL"]),
+            target_handle=os.environ.get("TARGET_HANDLE", "").strip(),
             session_path=session,
             audit_chat=audit,
             show_prices=show_prices,
