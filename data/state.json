@@ -1,5 +1,5 @@
 {
- "offset": 249577725,
+ "offset": 249577825,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -21,7 +21,10 @@
   "https://www.chollometro.com/ofertas/la-silla-espanola-pack-de-4-sillas-de-comedor-estilo-contemporaneo-modelo-guadix-2080254",
   "https://www.chollometro.com/ofertas/tommy-jeans-bolso-bandolera-de-mujer-disponible-en-negro-y-azul-marino-2081239",
   "https://www.chollometro.com/ofertas/x2-total-4-unidadesfrosch-lavavajillas-ecologico-a-mano-liquido-balsamo-limon-2x750ml-desengrasa-y-protege-la-piel-2081237",
-  "https://www.chollometro.com/ofertas/playmobil-junior-tren-de-animales-tren-colorido-con-animales-4-vagones-y-cabina-de-conductor-2081232"
+  "https://www.chollometro.com/ofertas/playmobil-junior-tren-de-animales-tren-colorido-con-animales-4-vagones-y-cabina-de-conductor-2081232",
+  "https://www.chollometro.com/ofertas/garmin-instinct-e-45-mm-reloj-deportivo-gps-resistente-con-hasta-16-dias-de-autonomia-2082433",
+  "https://www.chollometro.com/ofertas/juguetero-con-ruedas-135l-organizador-de-juguetes-grande-rosa-2082427",
+  "https://www.chollometro.com/ofertas/helly-hansen-ahiga-slip-on-zapatillas-hombre-2082424"
  ],
  "pending": {
   "3": {
@@ -137,6 +140,24 @@
    "category": "Brinquedos, família e crianças",
    "price": "16,89€",
    "image": "https://static.chollometro.com/threads/raw/yqcVc/2081232_1/re/150x150/qt/55/2081232_1.jpg"
+  },
+  "28": {
+   "title": "Garmin Instinct E 45 mm – Reloj deportivo GPS resistente con hasta 16 días de autonomía",
+   "category": "Electrónica",
+   "price": "157,99€",
+   "image": "https://static.chollometro.com/threads/raw/NxQyr/2082433_1/re/150x150/qt/55/2082433_1.jpg"
+  },
+  "29": {
+   "title": "Juguetero con Ruedas, 135L Organizador de Juguetes Grande, Rosa",
+   "category": "Juguetes, familia e hijos",
+   "price": "19,99€",
+   "image": "https://static.chollometro.com/threads/raw/JQUN2/2082427_1/re/150x150/qt/55/2082427_1.jpg"
+  },
+  "30": {
+   "title": "Helly Hansen Ahiga Slip-on, Zapatillas Hombre",
+   "category": "Moda y accesorios",
+   "price": "34€",
+   "image": "https://static.chollometro.com/threads/raw/bYtly/2082424_1/re/150x150/qt/55/2082424_1.jpg"
   }
  },
  "published": [
