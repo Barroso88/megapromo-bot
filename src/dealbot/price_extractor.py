@@ -13,13 +13,25 @@ except ImportError:
     pytesseract = None
 
 
-def extract_prices_from_text(text: str) -> tuple[str | None, str | None]:
-    """Extrai (preco_antes, preco_depois) de textos típicos de promoções."""
+def extract_prices_from_text(text: str, labeled_only: bool = False) -> tuple[str | None, str | None]:
+    """Extrai (preco_antes, preco_depois) de textos típicos de promoções.
+
+    `labeled_only`: só o padrão com etiquetas ("Antes: X Agora: Y", "❌ X ✅ Y"); sem ele, também os 2 primeiros valores em euros.
+    """
     if not text:
         return None, None
 
     # Normaliza
     clean_text = text.replace("€", " € ")
+
+    # Padrão com as duas etiquetas: "❌ Antes: X ✅ Agora: Y" (o mais comum), "Antes X ... Agora Y", "De X por Y"
+    price = r"(\d+(?:[.,]\d{1,2})?\s*€?)"
+    both_words = re.search(rf"(?:antes|de)\s*:?\s*{price}[^\d]{{0,20}}?(?:agora|por|para)\s*:?\s*{price}", clean_text, re.IGNORECASE)
+    if both_words:
+        p1, p2 = both_words.group(1).strip(), both_words.group(2).strip()
+        p1 = p1 if "€" in p1 else f"{p1}€"
+        p2 = p2 if "€" in p2 else f"{p2}€"
+        return p1.replace(" ", ""), p2.replace(" ", "")
 
     # Padrão: De X por Y ou Antes X Agora Y ou ❌ X ✅ Y
     pattern_both = re.search(
@@ -32,6 +44,9 @@ def extract_prices_from_text(text: str) -> tuple[str | None, str | None]:
         p1 = p1 if "€" in p1 else f"{p1}€"
         p2 = p2 if "€" in p2 else f"{p2}€"
         return p1.replace(" ", ""), p2.replace(" ", "")
+
+    if labeled_only:
+        return None, None
 
     # Procura valores em euros (€)
     euros = re.findall(r"(\d+[\.,]\d{1,2}\s*€|\d+\s*€)", clean_text)
@@ -315,8 +330,40 @@ def _agrees_with_text(before: str, after: str, text: str) -> bool:
     return abs((1 - new / old) * 100 - stated) <= 4
 
 
+def _eur(price: str) -> float:
+    return float(price.replace("€", "").replace(" ", "").replace(".", "").replace(",", "."))
+
+
+def _text_pair(text: str) -> tuple[str | None, str | None]:
+    """Par de preços escrito no texto, só se for credível.
+
+    Com etiquetas ("Antes/Agora", ❌/✅) o antigo tem de ser maior e o desconto plausível (3-90 %). Sem etiquetas
+    (dois valores soltos, ex: uma poupança e um preço) só vale se o desconto escrito no texto ("-35%") bater certo.
+    """
+    stated = extract_discount_pct(text)
+    before, after = extract_prices_from_text(text, labeled_only=True)
+    if before and after:
+        try:
+            old, new = _eur(before), _eur(after)
+        except ValueError:
+            return None, None
+        return (before, after) if old > new and 3 <= _discount_pct(old, new) <= 90 else (None, None)
+    if stated is None:
+        return None, None
+    a, b = extract_prices_from_text(text)
+    if not (a and b):
+        return None, None
+    try:
+        old, new = max(_eur(a), _eur(b)), min(_eur(a), _eur(b))
+    except ValueError:
+        return None, None
+    if old > new and 3 <= _discount_pct(old, new) <= 90 and abs(_discount_pct(old, new) - stated) <= 1.5:
+        return _fmt(old), _fmt(new)
+    return None, None
+
+
 def extract_prices(text: str, photo_bytes: bytes | None = None) -> tuple[str | None, str | None]:
-    """(preço antigo, preço atual). Os preços lidos na imagem têm prioridade; depois o par do texto.
+    """(preço antigo, preço atual). Os preços lidos na imagem têm prioridade; depois o par do texto, se for credível.
 
     Um preço isolado nunca é devolvido: não se sabe se é o antigo ou o atual.
     """
@@ -324,7 +371,7 @@ def extract_prices(text: str, photo_bytes: bytes | None = None) -> tuple[str | N
         before, after = extract_prices_from_image(photo_bytes, stated_pct=extract_discount_pct(text))
         if before and after and _agrees_with_text(before, after, text):
             return before, after
-    before, after = extract_prices_from_text(text)
+    before, after = _text_pair(text)
     if before and after:
         return before, after
     return None, None

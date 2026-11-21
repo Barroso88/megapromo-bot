@@ -136,3 +136,29 @@ def test_repost_caption_disclosure_can_be_short_full_or_empty():
     assert short.endswith("<i>#pub</i>") and DISCLOSURE not in short and "Como Associado" not in short
     none = compose_repost_caption(*args, disclosure="")
     assert "#pub" not in none and DISCLOSURE not in none and none.endswith("tag=t-21")
+
+
+def test_product_marker_lines_win_over_headlines():
+    from dealbot.cleaner import extract_product_title
+    dibbs = "🔥 BOM preço! Mínimo histórico!\n💶 POUPA EM CADA 2+\nRexona ▫️ Desodorizante Advanced Protection 72h\n🔗 Link: https://x"
+    assert extract_product_title(dibbs) == "Rexona – Desodorizante Advanced Protection 72h"
+    bilbia = "Praticamente ao mínimo histórico! 🔥\n🔹 Ubisoft | Prince of Persia: The Rogue Prince PS5\n👉 https://x"
+    assert extract_product_title(bilbia) == "Ubisoft – Prince of Persia: The Rogue Prince PS5"
+    assert extract_product_title("Super preço!\n🔹 Corsair Sabre v2 Pro Ultralight | Rato gaming sem fios\nhttps://x") == \
+        "Corsair Sabre v2 Pro Ultralight"                                           # parte longa antes do | continua a cortar
+
+
+def test_new_headline_phrases_are_not_titles():
+    from dealbot.cleaner import extract_product_title
+    for junk in ("Praticamente ao mínimo histórico! 🔥", "POUPA EM CADA 2+", "Quase ao mínimo histórico!",
+                 "Poupa mais ao levar 2"):
+        assert extract_product_title(f"{junk}\nhttps://x") == "Oferta Especial", junk
+
+
+def test_long_descriptions_are_cut_at_the_first_comma_or_sentence():
+    from dealbot.cleaner import extract_product_title
+    long_gabby = ("Conjunto de figuras A Casa de Bonecas da Gabby: O Filme, com personagens para recriares "
+                  "as aventuras da história.\n👉 https://x")
+    assert extract_product_title(long_gabby) == "Conjunto de figuras A Casa de Bonecas da Gabby: O Filme"
+    for name in ("Roborock Saros 10R Aspirador 22 000 Pa 7,98 cm preto", "Philips Lumea 8000 depilador IPL, 4 acessórios, BRI949/00"):
+        assert extract_product_title(f"{name}\nhttps://x") == name                  # curtos: ficam como estão

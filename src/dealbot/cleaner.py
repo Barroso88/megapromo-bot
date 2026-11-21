@@ -25,8 +25,10 @@ HEADLINE_WORDS = {
     "bom", "bons", "grande", "grandes", "queda", "incrível", "incrivel", "black", "friday", "deal",
     "promo", "promoção", "promocao", "agora", "só", "apenas", "urgente", "corre", "flash", "relâmpago",
     "relampago", "erro", "últimas", "ultimas", "chollo", "chollazo", "oportunidade", "baixa",
+    "praticamente", "quase", "poupa", "poupe", "cada", "levar", "leva", "leve", "voltou", "baixou",
 }
-STOPWORDS = {"de", "do", "da", "dos", "das", "a", "o", "as", "os", "e", "em", "na", "no", "com", "por", "para", "um", "uma"}
+STOPWORDS = {"de", "do", "da", "dos", "das", "a", "o", "as", "os", "e", "em", "na", "no", "com", "por", "para", "um", "uma",
+             "ao", "aos", "à", "às", "mais", "pelo", "pela"}
 INSTRUCTION_RE = re.compile(
     r"subscreva|poupe|cancel[aá]vel|\bseleciona|cup[aã]o|c[oó]digo|\baplica\b|\bclica|\bativa\b|resgata|vendido por|enviado por",
     re.IGNORECASE,
@@ -58,26 +60,51 @@ def is_headline(text: str) -> bool:
     return hits / len(words) >= 0.6
 
 
+MARKER_RE = re.compile(r"▫️|▫|▪️|◾|🔹|🔸")          # "Marca ▫️ Produto" (@cupoes) e "🔹 Produto" (@bilbiamtengarsada)
+BRAND_SEPARATOR_RE = re.compile(r"\s*(?:▫️|▫|▪️|◾)\s*")
+
+
+def _title_candidate(line: str) -> str | None:
+    """A linha limpa, se puder ser o nome de um produto; None se for chamariz, preço, instrução, etiqueta..."""
+    line = MARKDOWN_RE.sub("", line)                          # **negrito**, __itálico__, `código`, ~~riscado~~
+    clean = re.sub(r"^[^\w€]+", "", line).strip(" -—•*~#")       # tira emojis e símbolos do início
+    if not clean or clean.lower().startswith("http") or LABEL_LINE_RE.search(clean):
+        return None
+    if "€" in clean:                                          # "Gafas Hawkers 25,40€" -> "Gafas Hawkers"
+        clean = PRICE_RE_TITLE.sub("", clean).strip(" -—•*~#[]()")
+        if len(re.findall(r"[^\W\d_]+", clean)) < 2:
+            return None
+    if mostly_numbers(clean) or is_headline(clean) or INSTRUCTION_RE.search(clean):
+        return None
+    # Frases de chamariz ("32%! Excelente preço! Mínimo histórico!") não são o nome do produto
+    if CLICKBAIT_RE.search(clean) and len(clean.split()) <= 8:
+        return None
+    return clean
+
+
+def _finish_title(clean: str) -> str:
+    clean = BRAND_SEPARATOR_RE.sub(" – ", clean)               # "Rexona ▫️ Desodorizante" -> "Rexona – Desodorizante"
+    head, sep, rest = clean.partition(" | ")
+    if sep and len(head.strip()) < 15:                         # "Ubisoft | Prince of Persia": a marca é curta, mantém tudo
+        clean = f"{head.strip()} – {rest}"
+    if len(clean) > 80:                                        # descrições compridas: fica o nome, antes da 1.ª vírgula/frase
+        m = re.search(r"[,.](?:\s|$)", clean[25:])
+        if m:
+            clean = clean[: 25 + m.start()].rstrip(" ,.;:")
+    return short_title(clean, 140)
+
+
 def extract_product_title(raw_text: str, resolved_url: str | None = None) -> str:
-    """Extrai o nome real do produto ignorando chamadas genéricas como 'Preço mínimo histórico'."""
+    """Extrai o nome real do produto ignorando chamadas genéricas como 'Preço mínimo histórico'.
+
+    Uma linha marcada como produto ("Marca ▫️ Nome", "🔹 Nome") tem prioridade sobre as outras candidatas.
+    """
     lines = [l.strip() for l in (raw_text or "").splitlines() if l.strip()]
-    for line in lines:
-        line = MARKDOWN_RE.sub("", line)                      # **negrito**, __itálico__, `código`, ~~riscado~~
-        clean = re.sub(r"^[^\w€]+", "", line).strip(" -—•*~#")   # tira emojis e símbolos do início
-        if not clean or clean.lower().startswith("http"):
-            continue
-        if LABEL_LINE_RE.search(clean):
-            continue
-        if "€" in clean:                                      # "Gafas Hawkers 25,40€" -> "Gafas Hawkers"
-            clean = PRICE_RE_TITLE.sub("", clean).strip(" -—•*~#[]()")
-            if len(re.findall(r"[^\W\d_]+", clean)) < 2:
-                continue
-        if mostly_numbers(clean) or is_headline(clean) or INSTRUCTION_RE.search(clean):
-            continue
-        # Frases de chamariz ("32%! Excelente preço! Mínimo histórico!") não são o nome do produto
-        if CLICKBAIT_RE.search(clean) and len(clean.split()) <= 8:
-            continue
-        return short_title(clean, 140)
+    candidates = [(line, _title_candidate(line)) for line in lines]
+    marked = [c for line, c in candidates if c and MARKER_RE.search(line)]
+    chosen = marked[0] if marked else next((c for _, c in candidates if c), None)
+    if chosen:
+        return _finish_title(chosen)
 
     # Fallback: extrai do slug do URL da Amazon (ex: amazon.es/Nome-Do-Produto/dp/ASIN)
     if resolved_url:

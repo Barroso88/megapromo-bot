@@ -227,3 +227,23 @@ def test_a_block_reading_contradicted_by_the_global_votes_is_not_trusted():
 
 def test_a_unanimous_block_reading_is_trusted_even_without_global_support():
     assert _pair({56.91: 3}, {127.07: 1}, {96.91: 2}, 55) == ("127,07€", "56,91€")
+
+
+def test_unlabeled_euro_amounts_are_not_taken_as_old_and_new_price():
+    # "POUPA EM CADA 2+": 1,54€ é uma poupança e 7,98€ o preço; antes saía como preço antigo 1,54€ e atual 7,98€
+    assert extract_prices("POUPA EM CADA 2+ Rexona Advanced poupa 1,54€ ao levar 2 por 7,98€") == (None, None)
+    assert extract_prices("Rexona Advanced 7,98€ 1,54€") == (None, None)
+
+
+def test_labeled_prices_must_have_old_greater_than_new_and_a_plausible_discount():
+    assert extract_prices("❌ Antes: 9,00€ ✅ Agora: 5,00€") == ("9,00€", "5,00€")
+    assert extract_prices("❌ Antes: 5,00€ ✅ Agora: 9,00€") == (None, None)          # invertidos
+    assert extract_prices("❌ Antes: 100,00€ ✅ Agora: 1,00€") == (None, None)         # desconto de 99 %
+    assert extract_prices("❌ Antes: 10,00€ ✅ Agora: 9,90€") == (None, None)          # 1 %: não é promoção
+
+
+def test_unlabeled_amounts_are_accepted_only_when_the_stated_percentage_matches():
+    assert extract_prices("🔥 -35%! Rexona 12,30€ 7,98€") == ("12,30€", "7,98€")
+    assert extract_prices("🔥 -35%! Rexona 7,98€ 12,30€") == ("12,30€", "7,98€")        # ordem irrelevante, o % decide
+    assert extract_prices("🔥 -20%! Rexona 12,30€ 7,98€") == (None, None)
+    assert extract_prices("🔥 -35%! Rexona 7,98€") == (None, None)                      # um só valor: nunca
