@@ -124,3 +124,15 @@ def test_hidden_hyperlink_urls_from_entities_are_included():
     ent = SimpleNamespace(url="https://amzn.to/hidden1")
     msg = SimpleNamespace(text="🛒 Comprar aqui", message="🛒 Comprar aqui", reply_markup=None, entities=[ent, object()])
     assert extract_links_from_telethon_message(msg) == ["https://amzn.to/hidden1"]
+
+
+def test_repost_caption_disclosure_can_be_short_full_or_empty():
+    from dealbot.cleaner import compose_repost_caption
+    from dealbot.compose import DISCLOSURE
+    args = ("Bola adidas", "", "https://www.amazon.es/dp/B0TEST1234?tag=t-21", "@canal")
+    full = compose_repost_caption(*args)                                   # por defeito: aviso completo (comportamento antigo)
+    assert DISCLOSURE in full
+    short = compose_repost_caption(*args, disclosure="#pub")
+    assert short.endswith("<i>#pub</i>") and DISCLOSURE not in short and "Como Associado" not in short
+    none = compose_repost_caption(*args, disclosure="")
+    assert "#pub" not in none and DISCLOSURE not in none and none.endswith("tag=t-21")

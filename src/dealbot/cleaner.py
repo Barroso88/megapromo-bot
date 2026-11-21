@@ -143,12 +143,13 @@ def clean_text_for_repost(raw_text: str, target_handle: str) -> str:
     return cleaned
 
 
-def compose_repost_caption(title: str, clean_body: str, affiliate_link: str, target_handle: str) -> str:
+def compose_repost_caption(title: str, clean_body: str, affiliate_link: str, target_handle: str,
+                           disclosure: str = DISCLOSURE) -> str:
     """
     Formata o post com a descrição limpa definida pelo utilizador:
     - 🔥 Nome do produto
     - 💥 Link: (o meu link)
-    - Aviso de afiliado da Amazon
+    - Aviso de afiliado: o completo, só a etiqueta curta (#pub) ou nenhum, conforme `disclosure`
     """
     parts = []
     header_title = short_title(title, 160) if title else "Oferta Amazon"
@@ -156,5 +157,6 @@ def compose_repost_caption(title: str, clean_body: str, affiliate_link: str, tar
 
     parts.append(f"💥 Link: {escape(affiliate_link, quote=True)}")
 
-    parts.append(f"<i>{DISCLOSURE}</i>")
+    if disclosure:
+        parts.append(f"<i>{escape(disclosure)}</i>")
     return "\n\n".join(parts)

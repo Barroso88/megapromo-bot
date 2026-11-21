@@ -42,7 +42,14 @@ class ListenerConfig:
     target_handle: str = ""         # nome a mostrar nos cartões (TARGET_HANDLE); por defeito o @ do canal
     show_prices: bool = True        # ler (OCR/texto) e mostrar os preços no cartão, quando legíveis
     require_prices: bool = True     # só publica com os dois preços lidos; REQUIRE_PRICES=0 publica também sem preços
+    disclosure: str = "short"       # POST_DISCLOSURE: "short" (#pub; o aviso completo vai na descrição do canal) ou "full"
     amazon_images: bool = True      # imagem oficial por ASIN primeiro; o recorte da foto do canal é o plano B
+
+    @property
+    def disclosure_text(self) -> str:
+        """Texto de afiliado no fim de cada publicação."""
+        from .compose import DISCLOSURE
+        return "#pub" if self.disclosure == "short" else DISCLOSURE
 
     @property
     def display_handle(self) -> str:
@@ -63,6 +70,7 @@ class ListenerConfig:
         audit = os.environ.get("AUDIT_CHAT", "me").strip()
         show_prices = os.environ.get("SHOW_PRICES", "1").strip().lower() not in ("0", "false", "no", "off")
         require_prices = os.environ.get("REQUIRE_PRICES", "1").strip().lower() not in ("0", "false", "no", "off")
+        disclosure = "short" if os.environ.get("POST_DISCLOSURE", "short").strip().lower() == "short" else "full"
         amazon_images = os.environ.get("AMAZON_IMAGES", "1").strip().lower() not in ("0", "false", "no", "off")
 
         return cls(
@@ -76,6 +84,7 @@ class ListenerConfig:
             audit_chat=audit,
             show_prices=show_prices,
             require_prices=require_prices,
+            disclosure=disclosure,
             amazon_images=amazon_images,
         )
 

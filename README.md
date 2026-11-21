@@ -113,3 +113,8 @@ O monitor tenta primeiro a imagem principal do produto pelo ASIN (`images-eu.ssl
 - Por defeito os preços são **obrigatórios**: o monitor só publica quando lê os dois (antigo e atual), da imagem (OCR) ou do texto, e o cartão leva preço riscado, desconto e preço atual. As ofertas sem os dois preços ficam em "Ofertas Descartadas" no painel, com a foto de origem, para diagnosticar o OCR.
 - `REQUIRE_PRICES=0`: publica também sem preços (cartão só com imagem, nome e logótipo).
 - `SHOW_PRICES=0`: nunca lê nem mostra preços. Recomendado se quiseres evitar o risco das regras de preços do Acordo de Associados (os preços só devem vir da API ou de links da Amazon).
+
+## Aviso de afiliado (monitor)
+- Por defeito (`POST_DISCLOSURE=short`) cada publicação termina só com `#pub`, e o aviso completo fica na **descrição do canal**.
+- `POST_DISCLOSURE=full` repõe em cada publicação a frase longa ("Como Associado da Amazon, ganho com compras elegíveis. Preços sujeitos a alteração.").
+- A Cláusula 5 do Acordo (Amazon.es, atualizado a 15/10/2025) pede o aviso "de forma clara e destacada" no teu Sitio (as redes sociais contam como Sitio) e não fixa um local por publicação. A frase aprovada começa por "En calidad de Afiliado de Amazon, obtengo ingresos por las compras adscritas que cumplen los requisitos aplicables"; uma tradução só serve se for "sustancialmente similar" e previamente autorizada pela Amazon. Põe na descrição do canal essa frase tal como consta do teu acordo.

@@ -535,3 +535,29 @@ def test_a_successful_publication_clears_the_error_and_records_the_time(tmp_path
     state = _publish_case(tmp_path, monkeypatch, status=st)
     assert "B0DWDH32M8" in state.published
     assert st.data["last_publish_error"] is None and st.data["last_publish_at"] and st.data["published_total"] == 1
+
+
+def test_posts_carry_only_the_short_pub_tag_by_default_and_the_full_notice_when_asked(tmp_path, monkeypatch):
+    from dealbot.compose import DISCLOSURE
+
+    def run(disclosure):
+        async def _t():
+            client = MagicMock()
+            client.send_file, client.send_message = AsyncMock(), AsyncMock()
+            kw = {} if disclosure is None else {"disclosure": disclosure}
+            cfg = ListenerConfig(api_id=1, api_hash="h", amazon_tag="t-21", source_channels=["@f"],
+                                 target_channel="@meucanal", session_path=str(tmp_path / f"s{disclosure}"),
+                                 audit_chat="", **kw)
+            state, sf = State(published=[]), tmp_path / f"state{disclosure}.json"
+            state.save(sf)
+            msg = SimpleNamespace(
+                text="Aspirador Xiaomi sem fios\n❌ Antes: 129€\n✅ Agora: 89€\nhttps://www.amazon.es/dp/B0DWDH32M8",
+                message=None, photo=None, media=None, reply_markup=None)
+            await process_incoming_message(client, msg, cfg, state, sf)
+            return [c.args[1] for c in client.send_message.call_args_list if c.args[0] == "@meucanal"][0]
+        return asyncio.run(_t())
+
+    default_caption = run(None)
+    assert "#pub" in default_caption and DISCLOSURE not in default_caption
+    assert "?tag=t-21" in default_caption                                  # o link de afiliado mantém-se
+    assert DISCLOSURE in run("full")

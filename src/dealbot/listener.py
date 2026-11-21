@@ -168,6 +168,7 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
         clean_body=clean_body,
         affiliate_link=affiliate_link,
         target_handle=cfg.display_handle,
+        disclosure=cfg.disclosure_text,
     )
 
     # Os preços (texto ou OCR da imagem) só entram no cartão se os DOIS forem lidos. Por defeito a oferta sai na mesma

@@ -279,3 +279,20 @@ def test_target_channel_accepts_a_numeric_id_and_keeps_usernames(monkeypatch):
     monkeypatch.delenv("TARGET_HANDLE")
     cfg = ListenerConfig.from_env()
     assert cfg.target_channel == "@megapromo_pt" and cfg.display_handle == "@megapromo_pt"
+
+
+def test_listener_config_post_disclosure_defaults_to_short_pub_tag(monkeypatch):
+    from dealbot.compose import DISCLOSURE
+    from dealbot.config import ListenerConfig
+    base = {"TELEGRAM_API_ID": "1", "TELEGRAM_API_HASH": "h", "AMAZON_TAG": "t-21",
+            "SOURCE_CHANNELS": "@a", "TARGET_CHANNEL": "@b"}
+    for k, v in base.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.delenv("POST_DISCLOSURE", raising=False)
+    assert ListenerConfig.from_env().disclosure_text == "#pub"             # o aviso completo fica na descrição do canal
+    monkeypatch.setenv("POST_DISCLOSURE", " FULL ")
+    assert ListenerConfig.from_env().disclosure_text == DISCLOSURE
+    monkeypatch.setenv("POST_DISCLOSURE", "short")
+    assert ListenerConfig.from_env().disclosure_text == "#pub"
+    monkeypatch.setenv("POST_DISCLOSURE", "algo-estranho")
+    assert ListenerConfig.from_env().disclosure_text == DISCLOSURE        # na dúvida, o aviso completo
