@@ -1,5 +1,5 @@
 {
- "offset": 249578125,
+ "offset": 249578225,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -27,7 +27,10 @@
   "https://www.chollometro.com/ofertas/helly-hansen-ahiga-slip-on-zapatillas-hombre-2082424",
   "https://www.chollometro.com/ofertas/beats-pill-altavoz-bluetooth-portatil-24-horas-de-bateria-resistencia-ip67-y-compatible-con-apple-y-android-3-colores-2083016",
   "https://www.chollometro.com/ofertas/microfono-gaming-inalambrico-para-pc-microfono-dinamico-usb-con-brazo-3-niveles-de-reduccion-de-ruido-rgb-boton-mute-eq-2083012",
-  "https://www.chollometro.com/ofertas/gigabyte-g25f2-monitor-gaming-245-fhd-1920-x-1080-200hz-1ms-300-cdm2-displayhdr-10-hdmi-20-displayport-14-2083010"
+  "https://www.chollometro.com/ofertas/gigabyte-g25f2-monitor-gaming-245-fhd-1920-x-1080-200hz-1ms-300-cdm2-displayhdr-10-hdmi-20-displayport-14-2083010",
+  "https://www.chollometro.com/ofertas/soliver-pendientes-de-boton-de-plata-para-ninas-con-piedras-preciosas-2083904",
+  "https://www.chollometro.com/ofertas/bratz-first-edition-reimagined-yasmin-muneca-de-moda-coleccionable-2083898",
+  "https://www.chollometro.com/ofertas/apple-magic-keyboard-espanol-2083893"
  ],
  "pending": {
   "3": {
@@ -179,6 +182,24 @@
    "category": "Electrónica",
    "price": "89,99€",
    "image": "https://static.chollometro.com/threads/raw/nljKC/2083010_1/re/150x150/qt/55/2083010_1.jpg"
+  },
+  "34": {
+   "title": "s.Oliver Pendientes de botón de plata para niñas, con piedras preciosas",
+   "category": "Juguetes, familia e hijos",
+   "price": "7,14€",
+   "image": "https://static.chollometro.com/threads/raw/KNjZv/2083904_1/re/150x150/qt/55/2083904_1.jpg"
+  },
+  "35": {
+   "title": "Bratz First Edition Reimagined Yasmin - Muñeca de moda coleccionable",
+   "category": "Juguetes, familia e hijos",
+   "price": "20,99€",
+   "image": "https://static.chollometro.com/threads/raw/agIM2/2083898_1/re/150x150/qt/55/2083898_1.jpg"
+  },
+  "36": {
+   "title": "Apple Magic Keyboard - Español .",
+   "category": "Electrónica",
+   "price": "91€",
+   "image": "https://static.chollometro.com/threads/raw/3GsYW/2083893_1/re/150x150/qt/55/2083893_1.jpg"
   }
  },
  "published": [
