@@ -1,5 +1,5 @@
 {
- "offset": 249578525,
+ "offset": 249578625,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -33,7 +33,10 @@
   "https://www.chollometro.com/ofertas/apple-magic-keyboard-espanol-2083893",
   "https://www.chollometro.com/ofertas/pasta-dental-oral-b-advanced-fortalece-el-esmalte-paquete-de-2-x-75-ml-2084581",
   "https://www.chollometro.com/ofertas/star-wars-titan-series-figura-de-accion-de-darth-vader-de-30-cm-en-descripcionthe-mandalorian-figura-de-accion-de-30-cm-2084578",
-  "https://www.chollometro.com/ofertas/paquete-de-2-saco-de-dormir-para-bebe-2084577"
+  "https://www.chollometro.com/ofertas/paquete-de-2-saco-de-dormir-para-bebe-2084577",
+  "https://www.chollometro.com/ofertas/schmidt-doppelt-so-clever-juego-de-dados-2086575",
+  "https://www.chollometro.com/ofertas/parker-im-boligrafo-lacado-gris-con-adornos-dorados-punta-media-estuche-de-regalo-2086573",
+  "https://www.chollometro.com/ofertas/zapatillas-mujer-skechers-max-cushioning-zirrus-slip-ins-calce-sin-manos-ultra-go-2086571"
  ],
  "pending": {
   "3": {
@@ -221,6 +224,24 @@
    "category": "Brinquedos, família e crianças",
    "price": "21,99€",
    "image": "https://static.chollometro.com/threads/raw/Ew63d/2084577_1/re/150x150/qt/55/2084577_1.jpg"
+  },
+  "40": {
+   "title": "Jogo de dados Schmidt DOPPELT SO CLEVER.",
+   "category": "Brinquedos, família e crianças",
+   "price": "9,50€",
+   "image": "https://static.chollometro.com/threads/raw/nxDm1/2086575_1/re/150x150/qt/55/2086575_1.jpg"
+  },
+  "41": {
+   "title": "Caneta esferográfica Parker IM | lacado cinza com detalhes dourados | ponta média | caixa de presente",
+   "category": "Casa, habitação e escritório",
+   "price": "18,89€",
+   "image": "https://static.chollometro.com/threads/raw/OYsIu/2086573_1/re/150x150/qt/55/2086573_1.jpg"
+  },
+  "42": {
+   "title": "Sapatos de Mulher Skechers Max Cushioning Zirrus Slip-ins (ajuste mãos-livres, ULTRA GO)",
+   "category": "Moda e acessórios",
+   "price": "54,99€",
+   "image": "https://static.chollometro.com/threads/raw/vXReD/2086571_1/re/150x150/qt/55/2086571_1.jpg"
   }
  },
  "published": [
