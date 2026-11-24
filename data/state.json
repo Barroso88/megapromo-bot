@@ -1,5 +1,5 @@
 {
- "offset": 249578725,
+ "offset": 249578928,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -36,7 +36,10 @@
   "https://www.chollometro.com/ofertas/paquete-de-2-saco-de-dormir-para-bebe-2084577",
   "https://www.chollometro.com/ofertas/schmidt-doppelt-so-clever-juego-de-dados-2086575",
   "https://www.chollometro.com/ofertas/parker-im-boligrafo-lacado-gris-con-adornos-dorados-punta-media-estuche-de-regalo-2086573",
-  "https://www.chollometro.com/ofertas/zapatillas-mujer-skechers-max-cushioning-zirrus-slip-ins-calce-sin-manos-ultra-go-2086571"
+  "https://www.chollometro.com/ofertas/zapatillas-mujer-skechers-max-cushioning-zirrus-slip-ins-calce-sin-manos-ultra-go-2086571",
+  "https://www.chollometro.com/ofertas/absolut-mandrin-vodka-700-ml-oferta-black-friday-17-2087988",
+  "https://www.chollometro.com/ofertas/ballantines-finest-700-ml-miniatura-ballantines-10-anos-de-regalo-2087986",
+  "https://www.chollometro.com/ofertas/grifema-alcachofa-de-ducha-alta-presion-antical-con-3-modos-2087985"
  ],
  "pending": {
   "3": {
@@ -242,6 +245,24 @@
    "category": "Moda e acessórios",
    "price": "54,99€",
    "image": "https://static.chollometro.com/threads/raw/vXReD/2086571_1/re/150x150/qt/55/2086571_1.jpg"
+  },
+  "43": {
+   "title": "Absolut Mandrin Vodka 700 ml – Oferta Black Friday (-17 %)",
+   "category": "Supermercado y alimentación",
+   "price": "13,44€",
+   "image": "https://static.chollometro.com/threads/raw/Y6OsK/2087988_1/re/150x150/qt/55/2087988_1.jpg"
+  },
+  "44": {
+   "title": "Ballantine's Finest 700 ml + miniatura Ballantine's 10 años de regalo",
+   "category": "Supermercado y alimentación",
+   "price": "12,59€",
+   "image": "https://static.chollometro.com/threads/raw/6YGFh/2087986_1/re/150x150/qt/55/2087986_1.jpg"
+  },
+  "45": {
+   "title": "GRIFEMA Alcachofa de Ducha Alta Presión Antical con 3 Modos",
+   "category": "Jardín y bricolaje",
+   "price": "6€",
+   "image": "https://static.chollometro.com/threads/raw/CgjIZ/2087985_1/re/150x150/qt/55/2087985_1.jpg"
   }
  },
  "published": [
