@@ -1,5 +1,5 @@
 {
- "offset": 249579219,
+ "offset": 249579319,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -39,7 +39,10 @@
   "https://www.chollometro.com/ofertas/zapatillas-mujer-skechers-max-cushioning-zirrus-slip-ins-calce-sin-manos-ultra-go-2086571",
   "https://www.chollometro.com/ofertas/absolut-mandrin-vodka-700-ml-oferta-black-friday-17-2087988",
   "https://www.chollometro.com/ofertas/ballantines-finest-700-ml-miniatura-ballantines-10-anos-de-regalo-2087986",
-  "https://www.chollometro.com/ofertas/grifema-alcachofa-de-ducha-alta-presion-antical-con-3-modos-2087985"
+  "https://www.chollometro.com/ofertas/grifema-alcachofa-de-ducha-alta-presion-antical-con-3-modos-2087985",
+  "https://www.chollometro.com/ofertas/pop-funko-rocks-spice-girls-ginger-wannabe-2089914",
+  "https://www.chollometro.com/ofertas/pop-funko-wwe-aj-styles-2089912",
+  "https://www.chollometro.com/ofertas/figura-de-3-bonzes-sabiduria-decoracion-zen-y-feng-shui-2089911"
  ],
  "pending": {
   "3": {
@@ -263,6 +266,24 @@
    "category": "Jardín y bricolaje",
    "price": "6€",
    "image": "https://static.chollometro.com/threads/raw/CgjIZ/2087985_1/re/150x150/qt/55/2087985_1.jpg"
+  },
+  "46": {
+   "title": "POP Funko Rocks: Spice Girls - Ginger (Aspirante)",
+   "category": "Juguetes, familia e hijos",
+   "price": "8€",
+   "image": "https://static.chollometro.com/threads/raw/hDePp/2089914_1/re/150x150/qt/55/2089914_1.jpg"
+  },
+  "47": {
+   "title": "POP Funko WWE: AJ Styles",
+   "category": "Brinquedos, família e crianças",
+   "price": "8€",
+   "image": "https://static.chollometro.com/threads/raw/uqwnH/2089912_1/re/150x150/qt/55/2089912_1.jpg"
+  },
+  "48": {
+   "title": "Figura de 3 Bónus de Sabedoria – Decoração Zen e Feng Shui",
+   "category": "Brinquedos, família e crianças",
+   "price": "10,97€",
+   "image": "https://static.chollometro.com/threads/raw/vQgBA/2089911_1/re/150x150/qt/55/2089911_1.jpg"
   }
  },
  "published": [
