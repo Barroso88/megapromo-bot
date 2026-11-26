@@ -1,5 +1,5 @@
 {
- "offset": 249579519,
+ "offset": 249579681,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -45,7 +45,10 @@
   "https://www.chollometro.com/ofertas/figura-de-3-bonzes-sabiduria-decoracion-zen-y-feng-shui-2089911",
   "https://www.chollometro.com/ofertas/dragon-ball-z-las-peliculas-vol3-peliculas-5-y-6-2025-2090911",
   "https://www.chollometro.com/ofertas/joma-chubasquero-impermeable-con-capucha-2090910",
-  "https://www.chollometro.com/ofertas/caja-de-herramientas-stanley-essential-cierres-metalicos-asa-ergonomica-organizadores-en-la-tapa-bandeja-extraible-2090906"
+  "https://www.chollometro.com/ofertas/caja-de-herramientas-stanley-essential-cierres-metalicos-asa-ergonomica-organizadores-en-la-tapa-bandeja-extraible-2090906",
+  "https://www.chollometro.com/ofertas/mercurio-matico-juego-de-cartas-de-rapidez-mental-y-matematicas-resuelve-el-problema-antes-que-los-demas-2091914",
+  "https://www.chollometro.com/ofertas/los-rios-de-color-purpura-les-rivieres-pourpres-the-crimson-rivers-4k-uhd-blu-ray-2091912",
+  "https://www.chollometro.com/ofertas/roborock-f25-ace-pro-aspiradora-fregona-de-25000-pa-tecnologia-jetfoaming-2091907"
  ],
  "pending": {
   "3": {
@@ -305,6 +308,24 @@
    "category": "Jardín y bricolaje",
    "price": "6,60€",
    "image": "https://static.chollometro.com/threads/raw/zjwk9/2090906_1/re/150x150/qt/55/2090906_1.jpg"
+  },
+  "52": {
+   "title": "Mercúrio - Mático | Jogo de cartas de velocidade mental e matemática | Resolva o problema antes dos outros",
+   "category": "Brinquedos, família e crianças",
+   "price": "14,85€",
+   "image": "https://static.chollometro.com/threads/raw/0pyOH/2091914_1/re/150x150/qt/55/2091914_1.jpg"
+  },
+  "53": {
+   "title": "Os Rios Carmesins (4K UHD + Blu-ray)",
+   "category": "Cinema, livros, cultura e lazer",
+   "price": "11,95€",
+   "image": "https://static.chollometro.com/threads/raw/8qTtC/2091912_1/re/150x150/qt/55/2091912_1.jpg"
+  },
+  "54": {
+   "title": "Roborock F25 ACE Pro 25.000 Pa aspirador-esfregona, tecnologia JetFoaming",
+   "category": "Casa, habitação e escritório",
+   "price": "349€",
+   "image": "https://static.chollometro.com/threads/raw/PRZZ8/2091907_1/re/150x150/qt/55/2091907_1.jpg"
   }
  },
  "published": [
