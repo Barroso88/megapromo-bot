@@ -118,3 +118,11 @@ O monitor tenta primeiro a imagem principal do produto pelo ASIN (`images-eu.ssl
 - Por defeito (`POST_DISCLOSURE=short`) cada publicação termina só com `#pub`, e o aviso completo fica na **descrição do canal**.
 - `POST_DISCLOSURE=full` repõe em cada publicação a frase longa ("Como Associado da Amazon, ganho com compras elegíveis. Preços sujeitos a alteração.").
 - A Cláusula 5 do Acordo (Amazon.es, atualizado a 15/10/2025) pede o aviso "de forma clara e destacada" no teu Sitio (as redes sociais contam como Sitio) e não fixa um local por publicação. A frase aprovada começa por "En calidad de Afiliado de Amazon, obtengo ingresos por las compras adscritas que cumplen los requisitos aplicables"; uma tradução só serve se for "sustancialmente similar" e previamente autorizada pela Amazon. Põe na descrição do canal essa frase tal como consta do teu acordo.
+
+## Modo rigoroso (monitor, ligado por defeito)
+Com `STRICT_MODE=1` só se publica o que é verificável; o resto fica em "Ofertas Descartadas" com o motivo.
+- **Imagem:** só a da Amazon por ASIN. Não se recortam fotos dos canais (era a origem dos cortes).
+- **Título:** só de um formato conhecido: endereço da Amazon, `Marca ▫️ Produto`, `🔹 Produto`, ou a 1.ª linha dos posts com "👉 link" e "Antes:". Chamarizes e comentários são recusados.
+- **Preços:** par "Antes/Agora" no texto (sem contradizer o "-NN%"), ou leitura da imagem que bata com o "-NN%" do texto. Canais sem uma coisa nem outra não publicam.
+- `STRICT_MODE=0` repõe o comportamento anterior.
+Isto não garante 100 %: confia no que o canal de origem escreve e não confirma o preço na Amazon (só a API o faria).

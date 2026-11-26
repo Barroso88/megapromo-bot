@@ -43,6 +43,7 @@ class ListenerConfig:
     show_prices: bool = True        # ler (OCR/texto) e mostrar os preços no cartão, quando legíveis
     require_prices: bool = True     # só publica com os dois preços lidos; REQUIRE_PRICES=0 publica também sem preços
     disclosure: str = "short"       # POST_DISCLOSURE: "short" (#pub; o aviso completo vai na descrição do canal) ou "full"
+    strict: bool = False            # STRICT_MODE (ligado por defeito no ambiente): só publica o que é verificável
     amazon_images: bool = True      # imagem oficial por ASIN primeiro; o recorte da foto do canal é o plano B
 
     @property
@@ -71,6 +72,7 @@ class ListenerConfig:
         show_prices = os.environ.get("SHOW_PRICES", "1").strip().lower() not in ("0", "false", "no", "off")
         require_prices = os.environ.get("REQUIRE_PRICES", "1").strip().lower() not in ("0", "false", "no", "off")
         disclosure = "short" if os.environ.get("POST_DISCLOSURE", "short").strip().lower() == "short" else "full"
+        strict = os.environ.get("STRICT_MODE", "1").strip().lower() not in ("0", "false", "no", "off")
         amazon_images = os.environ.get("AMAZON_IMAGES", "1").strip().lower() not in ("0", "false", "no", "off")
 
         return cls(
@@ -85,6 +87,7 @@ class ListenerConfig:
             show_prices=show_prices,
             require_prices=require_prices,
             disclosure=disclosure,
+            strict=strict,
             amazon_images=amazon_images,
         )
 

@@ -375,3 +375,26 @@ def extract_prices(text: str, photo_bytes: bytes | None = None) -> tuple[str | N
     if before and after:
         return before, after
     return None, None
+
+
+def extract_verified_prices(text: str, photo_bytes: bytes | None = None) -> tuple[str | None, str | None]:
+    """Modo rigoroso: (antigo, atual) só quando duas coisas concordam.
+
+    Ou o texto traz o par etiquetado ("Antes/Agora"), credível e sem contradizer o "-NN%";
+    ou a leitura da imagem bate com o "-NN%" escrito no texto. Fora disso, (None, None).
+    """
+    stated = extract_discount_pct(text)
+
+    def agrees(before: str, after: str) -> bool:
+        return abs(_discount_pct(_eur(before), _eur(after)) - stated) <= 1.5
+
+    before, after = extract_prices_from_text(text, labeled_only=True)
+    if before and after:
+        old, new = _eur(before), _eur(after)
+        if old > new and 3 <= _discount_pct(old, new) <= 90 and (stated is None or agrees(before, after)):
+            return before, after
+        return None, None
+    if stated is None or not photo_bytes:
+        return None, None
+    before, after = extract_prices_from_image(photo_bytes, stated_pct=stated)
+    return (before, after) if before and after and agrees(before, after) else (None, None)

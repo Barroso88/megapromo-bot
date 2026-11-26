@@ -8,10 +8,10 @@ from urllib.parse import urlparse
 from telethon import TelegramClient, events
 
 from .card import make_card
-from .cleaner import GENERIC_TITLE, clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message, extract_product_title
+from .cleaner import GENERIC_TITLE, clean_text_for_repost, compose_repost_caption, extract_links_from_telethon_message, extract_product_title, extract_strict_title
 from .amazon_image import fetch_amazon_image
 from .product_image import isolate_product, trim_background
-from .price_extractor import extract_prices
+from .price_extractor import extract_prices, extract_verified_prices
 from .compose import short_title
 from .config import ListenerConfig
 from .links import LinkError, analyze_link, build_affiliate_link, title_from_url
@@ -155,11 +155,11 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
     if slug:
         title = short_title(await asyncio.to_thread(to_pt, slug), 140)
     if not title:
-        title = extract_product_title(raw_text)
+        title = (extract_strict_title(raw_text) or GENERIC_TITLE) if cfg.strict else extract_product_title(raw_text)
     if title == GENERIC_TITLE:
         await _audit_discard(client, cfg, source_display, detected_asin, original_url,
                              "nome do produto não encontrado (nem no endereço nem no texto)",
-                             data_dir=state_file.parent, title="")
+                             data_dir=state_file.parent, title="", excerpt=raw_text)
         return
 
     clean_body = clean_text_for_repost(raw_text, cfg.display_handle)
@@ -181,11 +181,12 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
             logger.warning("Não foi possível descarregar a foto (%s).", e)
     price_before = price_after = None
     if cfg.show_prices:
-        read_before, read_after = await asyncio.to_thread(extract_prices, raw_text, photo_data)
+        reader = extract_verified_prices if cfg.strict else extract_prices
+        read_before, read_after = await asyncio.to_thread(reader, raw_text, photo_data)
         logger.info("💰 Preços detetados: Antes=%s, Depois=%s", read_before, read_after)
         if read_before and read_after:
             price_before, price_after = read_before, read_after
-        elif cfg.require_prices:
+        elif cfg.require_prices or cfg.strict:
             await _audit_discard(client, cfg, source_display, detected_asin, original_url,
                                  "preços antes/depois não detetados",
                                  data_dir=state_file.parent, title=title,
@@ -194,12 +195,18 @@ async def process_incoming_message(client: TelegramClient, message, cfg: Listene
             return
 
     # Foto do produto: imagem oficial pelo ASIN; se não houver (ou estiver desligada), recorte da foto do canal.
+    # No modo rigoroso só serve a imagem da Amazon: o recorte da foto do canal pode cortar o produto.
     product_photo, image_source = None, ""
-    if cfg.amazon_images:
+    if cfg.amazon_images or cfg.strict:
         product_photo = await asyncio.to_thread(fetch_amazon_image, detected_asin)
         if product_photo is not None:
             product_photo = trim_background(product_photo)        # tira o branco à volta: o produto enche o cartão
         image_source = "Amazon (por ASIN)"
+    if product_photo is None and cfg.strict:
+        await _audit_discard(client, cfg, source_display, detected_asin, original_url,
+                             "sem imagem da Amazon (modo rigoroso)", data_dir=state_file.parent, title=title,
+                             price_before=price_before, price_after=price_after, excerpt=raw_text)
+        return
     if product_photo is None and photo_data:
         product_photo = await asyncio.to_thread(isolate_product, photo_data)
         image_source = "recorte da foto do canal"

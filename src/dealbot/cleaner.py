@@ -187,3 +187,43 @@ def compose_repost_caption(title: str, clean_body: str, affiliate_link: str, tar
     if disclosure:
         parts.append(f"<i>{escape(disclosure)}</i>")
     return "\n\n".join(parts)
+
+
+# ---- modo rigoroso: só títulos vindos de um formato conhecido ----------------------------------------------------
+EMOJI_RE = re.compile(r"[\U0001F000-\U0001FAFF☀-➿⬀-⯿][️‍]*")
+HYPE_PREFIX_RE = re.compile(r"^(?:\d+\s+)?[A-ZÀ-Ý0-9][A-ZÀ-Ý0-9 ·!%.]*?\s+-\s+(?=\S)")   # "MELHOR PREÇO - Smart TV"
+COMMENTARY_RE = re.compile(
+    r"!!|\?|\.\.\.|^(os|as|se|todo|todos|tudo|já|quem|para|não|este|esta|aproveita|faz|vê|olha|atenção)\b", re.IGNORECASE)
+
+
+def _first_line_product(line: str) -> str | None:
+    """1.ª linha do formato "[CHAMARIZ] 🙂 Produto, descrição": devolve o produto, ou None se for comentário."""
+    line = MARKDOWN_RE.sub("", line).strip()
+    emoji = EMOJI_RE.search(line)
+    if emoji:
+        before, after = line[: emoji.start()].strip(), line[emoji.end():].strip()
+        if not before or before == before.upper():            # nada, ou chamariz todo em maiúsculas
+            line = after
+    line = EMOJI_RE.split(line)[0].split(" · ")[0].strip(" -–—•*")   # corta no 2.º emoji ou no "·"
+    line = HYPE_PREFIX_RE.sub("", line)
+    if len(line) < 8 or line[0].islower() or COMMENTARY_RE.search(line):
+        return None
+    candidate = _title_candidate(line)
+    return _finish_title(candidate) if candidate else None
+
+
+def extract_strict_title(raw_text: str) -> str | None:
+    """Nome do produto só quando o formato é reconhecido; None em caso de dúvida.
+
+    Formatos: "Marca ▫️ Produto" (@cupoes), "🔹 Produto" (@bilbiamtengarsada) e, com "👉 link" + "Antes:",
+    a 1.ª linha (@descontosAinanas).
+    """
+    lines = [l.strip() for l in (raw_text or "").splitlines() if l.strip()]
+    for line in lines:
+        if MARKER_RE.search(line):
+            candidate = _title_candidate(line)
+            if candidate:
+                return _finish_title(candidate)
+    if lines and "👉" in raw_text and re.search(r"antes\s*:", raw_text, re.IGNORECASE):
+        return _first_line_product(lines[0])
+    return None
