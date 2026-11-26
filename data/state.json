@@ -1,5 +1,5 @@
 {
- "offset": 249579419,
+ "offset": 249579519,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -42,7 +42,10 @@
   "https://www.chollometro.com/ofertas/grifema-alcachofa-de-ducha-alta-presion-antical-con-3-modos-2087985",
   "https://www.chollometro.com/ofertas/pop-funko-rocks-spice-girls-ginger-wannabe-2089914",
   "https://www.chollometro.com/ofertas/pop-funko-wwe-aj-styles-2089912",
-  "https://www.chollometro.com/ofertas/figura-de-3-bonzes-sabiduria-decoracion-zen-y-feng-shui-2089911"
+  "https://www.chollometro.com/ofertas/figura-de-3-bonzes-sabiduria-decoracion-zen-y-feng-shui-2089911",
+  "https://www.chollometro.com/ofertas/dragon-ball-z-las-peliculas-vol3-peliculas-5-y-6-2025-2090911",
+  "https://www.chollometro.com/ofertas/joma-chubasquero-impermeable-con-capucha-2090910",
+  "https://www.chollometro.com/ofertas/caja-de-herramientas-stanley-essential-cierres-metalicos-asa-ergonomica-organizadores-en-la-tapa-bandeja-extraible-2090906"
  ],
  "pending": {
   "3": {
@@ -284,6 +287,24 @@
    "category": "Brinquedos, família e crianças",
    "price": "10,97€",
    "image": "https://static.chollometro.com/threads/raw/vQgBA/2089911_1/re/150x150/qt/55/2089911_1.jpg"
+  },
+  "49": {
+   "title": "Peliculas de Dragon Ball Z por 8.50",
+   "category": "Cine, libros, cultura y ocio",
+   "price": "8,50€",
+   "image": "https://static.chollometro.com/threads/raw/U6PSj/2090911_1/re/150x150/qt/55/2090911_1.jpg"
+  },
+  "50": {
+   "title": "Joma - Chubasquero Impermeable con Capucha",
+   "category": "Moda y accesorios",
+   "price": "12,70€",
+   "image": "https://static.chollometro.com/threads/raw/S9aip/2090910_1/re/150x150/qt/55/2090910_1.jpg"
+  },
+  "51": {
+   "title": "Caja de herramientas STANLEY Essential, cierres metálicos, asa ergonómica, organizadores en la tapa, bandeja extraíble",
+   "category": "Jardín y bricolaje",
+   "price": "6,60€",
+   "image": "https://static.chollometro.com/threads/raw/zjwk9/2090906_1/re/150x150/qt/55/2090906_1.jpg"
   }
  },
  "published": [
