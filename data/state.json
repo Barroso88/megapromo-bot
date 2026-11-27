@@ -1,5 +1,5 @@
 {
- "offset": 249579875,
+ "offset": 249579975,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -48,7 +48,10 @@
   "https://www.chollometro.com/ofertas/caja-de-herramientas-stanley-essential-cierres-metalicos-asa-ergonomica-organizadores-en-la-tapa-bandeja-extraible-2090906",
   "https://www.chollometro.com/ofertas/mercurio-matico-juego-de-cartas-de-rapidez-mental-y-matematicas-resuelve-el-problema-antes-que-los-demas-2091914",
   "https://www.chollometro.com/ofertas/los-rios-de-color-purpura-les-rivieres-pourpres-the-crimson-rivers-4k-uhd-blu-ray-2091912",
-  "https://www.chollometro.com/ofertas/roborock-f25-ace-pro-aspiradora-fregona-de-25000-pa-tecnologia-jetfoaming-2091907"
+  "https://www.chollometro.com/ofertas/roborock-f25-ace-pro-aspiradora-fregona-de-25000-pa-tecnologia-jetfoaming-2091907",
+  "https://www.chollometro.com/ofertas/reloj-cronografo-solar-lorus-sports-2093208",
+  "https://www.chollometro.com/ofertas/cecotec-cepillo-de-aire-14-cabezales-ceramiccare-14in1-airglisse-black-2093197",
+  "https://www.chollometro.com/ofertas/nutrichef-set-de-4-boles-ensaladeras-de-cristal-con-tapa-hermetica-apilables-aptos-para-microondas-horno-lavavajillas-y-congelador-2093196"
  ],
  "pending": {
   "3": {
@@ -326,6 +329,24 @@
    "category": "Casa, habitação e escritório",
    "price": "349€",
    "image": "https://static.chollometro.com/threads/raw/PRZZ8/2091907_1/re/150x150/qt/55/2091907_1.jpg"
+  },
+  "55": {
+   "title": "Relógio cronógrafo solar Lorus Sports",
+   "category": "Moda e acessórios",
+   "price": "83,19€",
+   "image": "https://static.chollometro.com/threads/raw/XDbKg/2093208_1/re/150x150/qt/55/2093208_1.jpg"
+  },
+  "56": {
+   "title": "Cecotec Air Brush 14 Cabeças CeramicCare 14 em 1 AirGlisse Preto",
+   "category": "Saúde e beleza",
+   "price": "93,90€",
+   "image": "https://static.chollometro.com/threads/raw/gVORi/2093197_1/re/150x150/qt/55/2093197_1.jpg"
+  },
+  "57": {
+   "title": "NutriChef Conjunto de 4 taças, saladeiras em vidro com tampa hermética, empilháveis, adequadas para micro-ondas, forno, máquina de lavar loiça e congelador",
+   "category": "Casa, habitação e escritório",
+   "price": "33,99€",
+   "image": "https://static.chollometro.com/threads/raw/oTTOx/2093196_1/re/150x150/qt/55/2093196_1.jpg"
   }
  },
  "published": [
