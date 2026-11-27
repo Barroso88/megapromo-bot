@@ -1,5 +1,5 @@
 {
- "offset": 249579975,
+ "offset": 249580267,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -51,7 +51,10 @@
   "https://www.chollometro.com/ofertas/roborock-f25-ace-pro-aspiradora-fregona-de-25000-pa-tecnologia-jetfoaming-2091907",
   "https://www.chollometro.com/ofertas/reloj-cronografo-solar-lorus-sports-2093208",
   "https://www.chollometro.com/ofertas/cecotec-cepillo-de-aire-14-cabezales-ceramiccare-14in1-airglisse-black-2093197",
-  "https://www.chollometro.com/ofertas/nutrichef-set-de-4-boles-ensaladeras-de-cristal-con-tapa-hermetica-apilables-aptos-para-microondas-horno-lavavajillas-y-congelador-2093196"
+  "https://www.chollometro.com/ofertas/nutrichef-set-de-4-boles-ensaladeras-de-cristal-con-tapa-hermetica-apilables-aptos-para-microondas-horno-lavavajillas-y-congelador-2093196",
+  "https://www.chollometro.com/ofertas/adidas-womens-zapatilla-vl-court-base-varias-tallas-y-colores-2094127",
+  "https://www.chollometro.com/ofertas/banpresto-figura-de-accion-naruto-uzumaki-naruto-72-series-33-vibration-stars-16cm-2094125",
+  "https://www.chollometro.com/ofertas/lenovo-l27h-4a-monitor-qhd-27-2094130"
  ],
  "pending": {
   "3": {
@@ -347,6 +350,24 @@
    "category": "Casa, habitação e escritório",
    "price": "33,99€",
    "image": "https://static.chollometro.com/threads/raw/oTTOx/2093196_1/re/150x150/qt/55/2093196_1.jpg"
+  },
+  "58": {
+   "title": "adidas Women's Zapatilla VL Court Base | Vários tamanhos e cores",
+   "category": "Moda e acessórios",
+   "price": "31,99€",
+   "image": "https://static.chollometro.com/threads/raw/wH62l/2094127_1/re/150x150/qt/55/2094127_1.jpg"
+  },
+  "59": {
+   "title": "Figura de ação Banpresto Naruto Uzumaki Naruto Série 72 - 33 estrelas vibratórias 16cm",
+   "category": "Brinquedos, família e crianças",
+   "price": "20,93€",
+   "image": "https://static.chollometro.com/threads/raw/C8B40/2094125_1/re/150x150/qt/55/2094125_1.jpg"
+  },
+  "60": {
+   "title": "Lenovo L27h-4A - Monitor QHD de 27\"",
+   "category": "Eletrônica",
+   "price": "152,10€",
+   "image": "https://static.chollometro.com/threads/raw/vVID8/2094130_1/re/150x150/qt/55/2094130_1.jpg"
   }
  },
  "published": [
