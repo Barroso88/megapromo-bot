@@ -1,5 +1,5 @@
 {
- "offset": 249580429,
+ "offset": 249580529,
  "seen": [
   "https://www.chollometro.com/ofertas/baliza-v16-homologada-dgt-con-geolocalizacion-luz-de-emergencia-coche-led-360-1km-conectada-dgt-30-pack-x2-2079378",
   "https://www.chollometro.com/ofertas/oraldine-enjuague-bucal-antiseptico-uso-diario-400-ml-y-200-ml-2-uds-antifungico-anti-periodontitis-gingivitishalitosis-con-hexeditina-2079375",
@@ -54,7 +54,10 @@
   "https://www.chollometro.com/ofertas/nutrichef-set-de-4-boles-ensaladeras-de-cristal-con-tapa-hermetica-apilables-aptos-para-microondas-horno-lavavajillas-y-congelador-2093196",
   "https://www.chollometro.com/ofertas/adidas-womens-zapatilla-vl-court-base-varias-tallas-y-colores-2094127",
   "https://www.chollometro.com/ofertas/banpresto-figura-de-accion-naruto-uzumaki-naruto-72-series-33-vibration-stars-16cm-2094125",
-  "https://www.chollometro.com/ofertas/lenovo-l27h-4a-monitor-qhd-27-2094130"
+  "https://www.chollometro.com/ofertas/lenovo-l27h-4a-monitor-qhd-27-2094130",
+  "https://www.chollometro.com/ofertas/nzxt-h9-flow-caja-pc-atx-doble-camara-2094860",
+  "https://www.chollometro.com/ofertas/mega-recopilacion-productos-reacondicionados-amazon-2094851",
+  "https://www.chollometro.com/ofertas/lego-speed-champions-mclaren-w1-77257-2094850"
  ],
  "pending": {
   "3": {
@@ -368,6 +371,24 @@
    "category": "Eletrônica",
    "price": "152,10€",
    "image": "https://static.chollometro.com/threads/raw/vVID8/2094130_1/re/150x150/qt/55/2094130_1.jpg"
+  },
+  "61": {
+   "title": "NZXT H9 Flow – Caixa para PC ATX com câmara dupla",
+   "category": "Eletrônica",
+   "price": "79,95€",
+   "image": "https://static.chollometro.com/threads/raw/GoLmT/2094860_1/re/150x150/qt/55/2094860_1.jpg"
+  },
+  "62": {
+   "title": "Mega Compilação de produtos recondicionados da Amazon",
+   "category": "Moda e acessórios",
+   "price": "",
+   "image": "https://static.chollometro.com/threads/raw/YXXo6/2094851_1/re/150x150/qt/55/2094851_1.jpg"
+  },
+  "63": {
+   "title": "LEGO Speed ​​​​​​Champions McLaren W1 - 77257",
+   "category": "Brinquedos, família e crianças",
+   "price": "17,99€",
+   "image": "https://static.chollometro.com/threads/raw/gsZKO/2094850_1/re/150x150/qt/55/2094850_1.jpg"
   }
  },
  "published": [
